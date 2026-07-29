@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yellow Doner — донер в Астане</title>
+<meta name="description" content="Yellow Doner — сочный донер на ул. Сыганак, 52/1 в Астане. Готовим при заказе, быстрая доставка по городу, оплата картой, наличными или QR.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='7' fill='%23F59E0B'/%3E%3Cpath fill='%23fff' fill-rule='evenodd' clip-rule='evenodd' d='M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.176 7.547 7.547 0 0 1-1.705-1.715.75.75 0 0 0-1.152-.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 0 1 1.925-3.546 3.75 3.75 0 0 1 3.255 3.718Z'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:#FFFFFF; --ice:#FFF8EF; --line:#EEE1CE; --ink:#211708; --grey:#6E5F4C;
+  --amber:#F59E0B; --amber-deep:#92400E; --amber-pale:#FDECC8; --wa:#25D366;
+  --r:16px; --pad:clamp(18px,5vw,64px); --max:1200px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--white);color:var(--ink);font-family:'Inter',system-ui,sans-serif;
+  font-weight:400;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:6px}
+.inner{max-width:var(--max);margin:0 auto}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.02em;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(32px,5.4vw,58px);font-weight:700;line-height:1.05}
+h2{font-size:clamp(24px,3.6vw,40px)}
+h3{font-size:clamp(15px,1.7vw,19px)}
+.lead{font-size:clamp(15px,1.6vw,18px);color:var(--grey);font-weight:400}
+.mono{font-family:'JetBrains Mono',monospace}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--amber-deep);
+  background:var(--amber-pale);border:1px solid var(--line);padding:6px 13px;border-radius:100px;letter-spacing:.02em}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--amber);flex:none}
+.dot.shut{background:#C6553F}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;
+  border-radius:11px;font-size:15px;font-weight:600;border:1px solid transparent;cursor:pointer;
+  transition:.2s ease;white-space:nowrap;font-family:'Inter',sans-serif}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-wa:hover{background:#1EBE5A;transform:translateY(-1px)}
+.btn-blue{background:var(--amber);color:#fff}
+.btn-blue:hover{background:var(--amber-deep);transform:translateY(-1px)}
+.btn-out{border-color:var(--line);color:var(--ink);background:#fff}
+.btn-out:hover{border-color:var(--amber)}
+.btn svg{width:18px;height:18px;flex:none}
+
+/* logo */
+.logo{display:flex;align-items:center;gap:10px;margin-right:auto;flex:none}
+.mark{width:36px;height:36px;flex:none;border-radius:11px;background:var(--amber);
+  display:grid;place-items:center;box-shadow:0 4px 14px rgba(245,158,11,.35)}
+.mark svg{width:19px;height:19px}
+.wordmark{display:flex;flex-direction:column;line-height:1}
+.wordmark .a{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.02em}
+.wordmark .a em{color:var(--amber);font-style:normal}
+.wordmark .b{font-size:8.5px;font-weight:600;letter-spacing:.28em;color:var(--grey);margin-top:3px}
+
+/* header */
+header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar{max-width:var(--max);margin:0 auto;padding:11px var(--pad);display:flex;align-items:center;gap:16px}
+.menu-links{display:flex;gap:22px;font-size:14px;color:var(--grey);font-weight:500}
+.menu-links a{position:relative;padding:2px 0}
+.menu-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-2px;height:1.5px;background:var(--amber);transition:right .25s ease}
+.menu-links a:hover{color:var(--ink)}
+.menu-links a:hover::after{right:0}
+.tel{font-weight:700;font-size:15px;letter-spacing:-.01em;font-family:'JetBrains Mono',monospace}
+.switches{display:flex;align-items:center;gap:8px}
+.langs{display:flex;background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:3px}
+.langs button{border:0;background:transparent;color:var(--grey);cursor:pointer;font-family:inherit;
+  font-size:12px;font-weight:700;padding:6px 10px;border-radius:100px;transition:.18s;text-transform:uppercase}
+.langs button:hover{color:var(--ink)}
+.langs button.on{background:#fff;color:var(--amber-deep);box-shadow:0 1px 3px rgba(33,23,8,.08)}
+#burger{display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--ice);
+  cursor:pointer;place-items:center;flex:none}
+#burger svg{width:17px;height:17px}
+.drawer{display:none;border-top:1px solid var(--line);background:#fff;padding:8px var(--pad) 16px}
+.drawer.open{display:block}
+.drawer a{display:block;padding:12px 0;font-size:16px;border-bottom:1px solid var(--line)}
+.drawer .tel-m{font-weight:700;font-family:'JetBrains Mono',monospace;border:0}
+
+@media(max-width:1080px){.menu-links{display:none}}
+@media(max-width:860px){#burger{display:grid}}
+@media(max-width:760px){.tel{display:none}}
+@media(max-width:560px){
+  .bar{gap:8px;padding-left:16px;padding-right:16px}
+  .bar .btn-wa{padding:10px 13px}
+  .bar .btn-wa .lbl{display:none}
+  .wordmark .b{display:none}
+  .langs button{padding:6px 8px;font-size:11px}
+}
+
+/* hero */
+.hero{padding:clamp(30px,5vw,60px) var(--pad) clamp(38px,6vw,70px);position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,56px);align-items:center;position:relative}
+.hero h1{margin:16px 0 18px}
+.hero .lead{max-width:46ch}
+.hero h1 .hl{color:var(--amber)}
+.cta{display:flex;flex-wrap:wrap;gap:11px;margin-top:26px}
+.trust{display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,42px);margin-top:32px;padding-top:26px;border-top:1px solid var(--line)}
+.trust div span{display:block;font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.trust div small{font-size:12.5px;color:var(--grey)}
+
+.hero-art{position:relative;width:min(420px,100%);aspect-ratio:1/1;margin:0 auto}
+.hero-art .ring{position:absolute;inset:0;border-radius:50%;background:var(--amber-pale)}
+.hero-art .ring2{position:absolute;inset:12%;border-radius:50%;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:0 20px 50px rgba(146,64,14,.16)}
+.hero-art .flame{width:34%;color:var(--amber)}
+.pulse-wrap{position:absolute;left:-6%;right:-6%;top:50%;transform:translateY(-50%);height:70px;pointer-events:none}
+.pulse-line{width:100%;height:100%}
+.pulse-path{fill:none;stroke:var(--amber);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:640;stroke-dashoffset:640;animation:draw 3.2s ease-in-out infinite}
+@keyframes draw{
+  0%{stroke-dashoffset:640}
+  55%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:-640}
+}
+.hero-art .chip{position:absolute;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:9px 13px;font-size:12.5px;font-weight:600;box-shadow:0 10px 24px rgba(33,23,8,.08);
+  display:flex;align-items:center;gap:7px}
+.hero-art .chip svg{width:15px;height:15px;color:var(--amber);flex:none}
+.hero-art .chip.c1{top:6%;right:2%}
+.hero-art .chip.c2{bottom:8%;left:0}
+@media(max-width:860px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-art{order:-1;width:200px;height:200px;aspect-ratio:auto;margin:0 auto 12px}
+  .hero-art .chip{display:none}
+}
+
+/* strip */
+.strip{background:var(--ice);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip-in{max-width:var(--max);margin:0 auto;padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:18px}
+.si{display:flex;gap:12px;align-items:flex-start}
+.si b{display:block;font-size:14.5px;font-weight:700}
+.si p{font-size:13px;color:var(--grey);line-height:1.45}
+.ic{width:34px;height:34px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--amber)}
+.ic svg{width:17px;height:17px}
+
+section{padding:clamp(46px,6.5vw,88px) var(--pad)}
+.head{max-width:56ch;margin-bottom:clamp(26px,4vw,44px)}
+.head h2{margin:12px 0 12px}
+
+/* menu */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:#fff;transition:.22s ease}
+.card:hover{box-shadow:0 10px 28px rgba(33,23,8,.07);transform:translateY(-2px);border-color:#F3D9A8}
+.card .chead{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.card .cico{width:38px;height:38px;border-radius:10px;background:var(--amber-pale);color:var(--amber-deep);display:grid;place-items:center;flex:none}
+.card .cico svg{width:19px;height:19px}
+.card ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px}
+.card li{font-size:13px;color:var(--grey);background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:5px 11px}
+
+/* locations */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.lgrid:has(.loc:only-child){grid-template-columns:minmax(0,440px);justify-content:center}
+.loc{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.22s ease}
+.loc:hover{box-shadow:0 10px 28px rgba(33,23,8,.07)}
+.loc-top{padding:clamp(18px,2.4vw,24px);flex:1}
+.loc-top h3{margin-bottom:6px}
+.loc-top .addr{font-size:14px;color:var(--grey)}
+.loc-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip2{font-size:12px;color:var(--grey);background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:4px 11px}
+.chip2.star{color:var(--amber-deep);font-weight:600}
+.loc-acts{display:flex;border-top:1px solid var(--line)}
+.loc-acts a{flex:1;padding:13px 8px;text-align:center;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+.loc-acts a+a{border-left:1px solid var(--line)}
+.loc-acts a:hover{background:var(--ice)}
+.loc-acts .w{color:#0F8C4B}
+.loc-acts svg{width:15px;height:15px;flex:none}
+
+/* reviews */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rev{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:var(--ice)}
+.stars{color:var(--amber-deep);font-size:13px;letter-spacing:2px;margin-bottom:12px}
+.rev p{font-size:15px;line-height:1.6}
+.rev .who{margin-top:14px;font-size:12.5px;color:var(--grey)}
+
+.contact{background:var(--ink);color:#fff;border-radius:clamp(20px,3vw,30px);padding:clamp(28px,5vw,58px);text-align:center;position:relative;overflow:hidden}
+.contact::after{content:'';position:absolute;width:340px;height:340px;right:-90px;top:-120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(245,158,11,.55),transparent 68%)}
+.contact>*{position:relative}
+.contact h2{color:#fff;margin-bottom:12px}
+.contact p{opacity:.72;max-width:48ch;margin:0 auto 26px;font-weight:400}
+.contact .cta{justify-content:center}
+.contact .btn-out{background:transparent;border-color:rgba(255,255,255,.28);color:#fff}
+.contact .btn-out:hover{border-color:#fff}
+
+footer{border-top:1px solid var(--line);padding:clamp(34px,4.5vw,54px) var(--pad);background:var(--ice)}
+.fgrid{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px}
+.fgrid h4{font-size:13px;font-weight:700;margin-bottom:11px}
+.fgrid p,.fgrid a{font-size:13.5px;color:var(--grey);line-height:2}
+.fgrid a:hover{color:var(--ink)}
+.copy{max-width:var(--max);margin:28px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--grey);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+
+.fab{position:fixed;right:18px;bottom:18px;z-index:70;width:56px;height:56px;border-radius:50%;background:var(--wa);
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(37,211,102,.42);transition:transform .2s}
+.fab:hover{transform:scale(1.06)}
+.fab svg{width:28px;height:28px}
+
+.note{margin-top:20px;font-size:12.5px;color:var(--grey);border-left:2px solid var(--amber);padding-left:13px;max-width:66ch;line-height:1.6}
+.note b{color:var(--amber-deep);font-weight:700}
+
+.rise{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rise.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+  .rise{opacity:1;transform:none}
+  .pulse-path{stroke-dashoffset:0;animation:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="logo" href="#top" aria-label="Yellow Doner">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path fill="#fff" fill-rule="evenodd" clip-rule="evenodd" d="M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.176 7.547 7.547 0 0 1-1.705-1.715.75.75 0 0 0-1.152-.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 0 1 1.925-3.546 3.75 3.75 0 0 1 3.255 3.718Z"/></svg></span>
+      <span class="wordmark">
+        <span class="a"><em>YELLOW</em> DONER</span>
+        <span class="b" data-t="lm_city">АСТАНА</span>
+      </span>
+    </a>
+
+    <nav class="menu-links">
+      <a href="#services" data-t="nav_services"></a>
+      <a href="#locations" data-t="nav_loc"></a>
+      <a href="#reviews" data-t="nav_rev"></a>
+      <a href="#contact" data-t="nav_con"></a>
+    </nav>
+
+    <a class="tel" href="tel:+77088880570">+7 708 888 05 70</a>
+
+    <div class="switches">
+      <div class="langs" id="langs" role="group" aria-label="Language">
+        <button data-lang="kk">KK</button>
+        <button data-lang="ru">RU</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <button id="burger" aria-label="Menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+
+    <a class="btn btn-wa" id="wa-top" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+      <span class="lbl">WhatsApp</span>
+    </a>
+  </div>
+
+  <div class="drawer" id="drawer">
+    <a href="#services" data-t="nav_services"></a>
+    <a href="#locations" data-t="nav_loc"></a>
+    <a href="#reviews" data-t="nav_rev"></a>
+    <a href="#contact" data-t="nav_con"></a>
+    <a class="tel-m" href="tel:+77088880570">+7 708 888 05 70</a>
+  </div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-grid inner">
+    <div class="rise">
+      <span class="tag"><span class="dot" id="st-dot"></span> <span id="st-text"></span></span>
+      <h1 id="hero-h1"></h1>
+      <p class="lead" data-t="hero_lead"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-hero" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="btn_order"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77088880570"><span data-t="btn_call"></span> +7 708 888 05 70</a>
+      </div>
+      <div class="trust">
+        <div><span>4.7★</span><small data-t="t_rate"></small></div>
+        <div><span>40+</span><small data-t="t_rev"></small></div>
+        <div><span data-t="t_visit_big"></span><small data-t="t_visit"></small></div>
+      </div>
+    </div>
+
+    <div class="hero-art rise">
+      <div class="ring"></div>
+      <div class="ring2">
+        <svg class="flame" viewBox="0 0 24 24" fill="none"><path fill="currentColor" fill-rule="evenodd" clip-rule="evenodd" d="M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.176 7.547 7.547 0 0 1-1.705-1.715.75.75 0 0 0-1.152-.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 0 1 1.925-3.546 3.75 3.75 0 0 1 3.255 3.718Z"/></svg>
+      </div>
+      <div class="pulse-wrap">
+        <svg class="pulse-line" viewBox="0 0 400 70" preserveAspectRatio="none">
+          <path class="pulse-path" d="M0,35 L110,35 L130,10 L150,60 L170,35 L400,35"/>
+        </svg>
+      </div>
+      <div class="chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg><span data-t="chip1"></span></div>
+      <div class="chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg><span data-t="chip2"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="strip-in">
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><div><b data-t="s1b"></b><p data-t="s1"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M3 7l9-4 9 4M12 3v18"/></svg></div><div><b data-t="s2b"></b><p data-t="s2"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 4 13V8a1 1 0 0 1 1-1h1a7 7 0 0 1 7 7v1a5 5 0 0 1-5 5Z"/><path d="M4 13c4 0 7 3 7 7"/></svg></div><div><b data-t="s3b"></b><p data-t="s3"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div><b data-t="s4b"></b><p data-t="s4"></p></div></div>
+  </div>
+</div>
+
+<section id="services">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_services"></span>
+      <h2 data-t="serv_h"></h2>
+      <p class="lead" data-t="serv_lead"></p>
+    </div>
+    <div class="sgrid" id="sgrid"></div>
+    <p class="note"><b>Build note:</b> цены и позиции взяты с фотографий меню Yellow Doner на 2ГИС (фото от 15.06.2026) — стоит сверить, не менялись ли они с тех пор.</p>
+  </div>
+</section>
+
+<section id="locations" style="background:var(--ice);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_loc"></span>
+      <h2 data-t="loc_h"></h2>
+      <p class="lead" data-t="loc_lead"></p>
+    </div>
+    <div class="lgrid" id="locs"></div>
+    <p class="note"><b>Build note:</b> адрес, телефон и часы работы взяты с карточки на 2ГИС. Instagram-аккаунт не был виден на скриншотах — пришлите ссылку, и я добавлю её в шапку и подвал сайта.</p>
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_rev"></span>
+      <h2 data-t="rev_h"></h2>
+    </div>
+    <div class="rgrid" id="revs"></div>
+    <p class="note"><b>Build note:</b> пересказано по открытым отзывам на 2ГИС (без имён авторов), рейтинг 4.7 на основе 45 оценок / 38 отзывов на момент сборки сайта.</p>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <div class="contact rise" id="contact">
+      <h2 data-t="c_h"></h2>
+      <p data-t="c_p"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-cta" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="c_btn"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77088880570">+7 708 888 05 70</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fgrid">
+    <div>
+      <a class="logo" href="#top" style="margin-bottom:12px" aria-label="Yellow Doner">
+        <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path fill="#fff" fill-rule="evenodd" clip-rule="evenodd" d="M12.963 2.286a.75.75 0 0 0-1.071-.136 9.742 9.742 0 0 0-3.539 6.176 7.547 7.547 0 0 1-1.705-1.715.75.75 0 0 0-1.152-.082A9 9 0 1 0 15.68 4.534a7.46 7.46 0 0 1-2.717-2.248ZM15.75 14.25a3.75 3.75 0 1 1-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 0 1 1.925-3.546 3.75 3.75 0 0 1 3.255 3.718Z"/></svg></span>
+        <span class="wordmark"><span class="a"><em>YELLOW</em> DONER</span><span class="b" data-t="lm_city"></span></span>
+      </a>
+      <p><span data-t="f_about"></span></p>
+    </div>
+    <div>
+      <h4 data-t="nav_con"></h4>
+      <a href="tel:+77088880570">+7 708 888 05 70</a><br>
+      <a href="https://wa.me/77088880570" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+    <div>
+      <h4 data-t="f_sect"></h4>
+      <a href="#services" data-t="nav_services"></a><br>
+      <a href="#locations" data-t="nav_loc"></a><br>
+      <a href="#reviews" data-t="nav_rev"></a>
+    </div>
+    <div>
+      <h4 data-t="f_map"></h4>
+      <a href="https://2gis.kz/astana/geo/70000001114980970" target="_blank" rel="noopener">2ГИС</a>
+    </div>
+  </div>
+  <div class="copy">
+    <span>© <span id="yr"></span> Yellow Doner, <span data-t="f_city"></span></span>
+    <span>2ГИС</span>
+  </div>
+</footer>
+
+<a class="fab" id="wa-fab" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="#fff"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+</a>
+
+<script>
+const T = {
+ kk:{
+  lm_city:"АСТАНА", nav_services:"Мәзір", nav_loc:"Мекенжай", nav_rev:"Пікірлер", nav_con:"Байланыс",
+  st_open:"Қазір ашық", st_shut:"Жабық · 12:00-де ашылады",
+  hero_h1_a:"Донер ", hero_h1_b:"10 минутта", hero_h1_c:" — Астана",
+  hero_lead:"Сыганак көшесі, 52/1 мекенжайында дәмді донер. Тапсырыс бойынша дайындаймыз және Астана бойынша жеткіземіз — WhatsApp-қа жазыңыз.",
+  btn_order:"WhatsApp-қа жазу", btn_call:"Қоңырау шалу",
+  t_rate:"2ГИС бағасы", t_rev:"баға 2ГИС-те", t_visit_big:"Иә", t_visit:"жеткізу бар",
+  chip1:"Тапсырыс бойынша дайындаймыз", chip2:"Жылдам жеткізу",
+  s1b:"Жылдам", s1:"Донер 5-10 минутта дайын",
+  s2b:"Жеткізу", s2:"Астана бойынша жылдам жеткіземіз",
+  s3b:"Жаңа өнімдер", s3:"Ет пен көкөністер күн сайын жаңа",
+  s4b:"Кез келген төлем", s4:"Карта, қолма-қол, QR-код",
+  serv_h:"Донерден сусынға дейін — толық мәзір.",
+  serv_lead:"Yellow Doner-дің 2ГИС-тегі мәзірінен — донер, сусындар, қосымшалар.",
+  cat1:"Донер", cat2:"Сусындар", cat3:"Қосымша",
+  i1:"Тауық еті донер 1x — 1800 ₸", i2:"Тауық еті донер 1.5x — 2200 ₸",
+  i3:"Сиыр еті донер 1x — 2200 ₸", i4:"Сиыр еті донер 1.5x — 2500 ₸",
+  i5:"Ассорти донер 1x — 2100 ₸", i6:"Ассорти донер 1.5x — 2400 ₸",
+  i7:"Coca-Cola 0.5 л — 650 ₸", i8:"Coca-Cola ж/б 0.5 л — 700 ₸",
+  i9:"Coca-Cola Zero 0.5 л — 650 ₸", i10:"Coca-Cola Zero ж/б 0.45 л — 700 ₸",
+  i11:"Sprite 0.5 л — 650 ₸", i12:"Sprite ж/б 0.45 л — 700 ₸",
+  i13:"Fanta 0.5 л — 650 ₸", i14:"Fanta ж/б 0.45 л — 700 ₸",
+  i15:"Fuse Tea 0.5 л — 650 ₸", i16:"Fuse Tea ж/б 0.45 л — 700 ₸",
+  i17:"Piko 0.2 л — 500 ₸", i18:"Bonaqua 0.5 л — 400 ₸", i19:"Айран — 500 ₸",
+  i20:"Фри картобы — 650 ₸", i21:"Ащы бұрыш — 700 ₸", i22:"Халапеньо бұрышы — 650 ₸",
+  i23:"Тауық еті +50 гр — 700 ₸", i24:"Сиыр еті +50 гр — 500 ₸", i25:"Тұздық (қызыл/ақ) — 150 ₸",
+  loc_h:"Бір мекенжай — Астана.", loc_lead:"Бағыт салу үшін басыңыз немесе WhatsApp-қа жазыңыз.",
+  a_dir:"Бағыт", a_call:"Қоңырау",
+  branch1_n:"Сыганак", branch1_a:"Сыганак көшесі, 52/1, Есіл ауданы, 1-қабат",
+  rev_h:"Клиенттер не дейді.",
+  r1:"Астанадағы ең жақсы донер 🔥", r1w:"2ГИС пікірі",
+  r2:"Донер өте дәмді, еті шырынды әрі жақсы дайындалған, көкөністері жаңа, тұздығы дәмін керемет толықтырады. Порциясы үлкен әрі тойымды.", r2w:"2ГИС пікірі",
+  r3:"Жаңа орын екен, бірақ атына сай — бәрі сары 😁 Донерде ет өте көп, бұл қуантады.", r3w:"2ГИС пікірі",
+  r4:"Донерлері керемет! Абайдағы донерден әлдеқайда жақсы.", r4w:"2ГИС пікірі",
+  c_h:"Не тапсырыс бересіз?", c_p:"WhatsApp-қа қандай донер керегін және қайда жеткізу керегін жазыңыз — бағасын айтамыз.",
+  c_btn:"WhatsApp-қа жазу", f_about:"Астанадағы донерхана. Тапсырыс бойынша дайындаймыз, жеткіземіз.",
+  f_sect:"Бөлімдер", f_map:"Картада", f_city:"Астана"
+ },
+ ru:{
+  lm_city:"АСТАНА", nav_services:"Меню", nav_loc:"Адрес", nav_rev:"Отзывы", nav_con:"Контакты",
+  st_open:"Сейчас открыто", st_shut:"Закрыто · откроемся в 12:00",
+  hero_h1_a:"Донер ", hero_h1_b:"за 10 минут", hero_h1_c:" — Астана",
+  hero_lead:"Сочный донер на ул. Сыганак, 52/1. Готовим при заказе и доставляем по Астане — просто напишите в WhatsApp.",
+  btn_order:"Написать в WhatsApp", btn_call:"Позвонить",
+  t_rate:"рейтинг на 2ГИС", t_rev:"оценок на 2ГИС", t_visit_big:"Да", t_visit:"доставка по Астане",
+  chip1:"Готовим при заказе", chip2:"Быстрая доставка",
+  s1b:"Быстро", s1:"Донер готов за 5-10 минут",
+  s2b:"Доставка", s2:"Быстро привезём по Астане",
+  s3b:"Свежие продукты", s3:"Мясо и овощи свежие каждый день",
+  s4b:"Любая оплата", s4:"Карта, наличные, QR-код",
+  serv_h:"От донера до напитков — всё меню.",
+  serv_lead:"Меню Yellow Doner — с их собственной страницы на 2ГИС: донер, напитки, добавки.",
+  cat1:"Донер", cat2:"Напитки", cat3:"Дополнительно",
+  i1:"Куриный донер 1x — 1800 ₸", i2:"Куриный донер 1.5x — 2200 ₸",
+  i3:"Говяжий донер 1x — 2200 ₸", i4:"Говяжий донер 1.5x — 2500 ₸",
+  i5:"Ассорти донер 1x — 2100 ₸", i6:"Ассорти донер 1.5x — 2400 ₸",
+  i7:"Coca-Cola 0.5 л — 650 ₸", i8:"Coca-Cola ж/б 0.5 л — 700 ₸",
+  i9:"Coca-Cola Zero 0.5 л — 650 ₸", i10:"Coca-Cola Zero ж/б 0.45 л — 700 ₸",
+  i11:"Sprite 0.5 л — 650 ₸", i12:"Sprite ж/б 0.45 л — 700 ₸",
+  i13:"Fanta 0.5 л — 650 ₸", i14:"Fanta ж/б 0.45 л — 700 ₸",
+  i15:"Fuse Tea 0.5 л — 650 ₸", i16:"Fuse Tea ж/б 0.45 л — 700 ₸",
+  i17:"Piko 0.2 л — 500 ₸", i18:"Bonaqua 0.5 л — 400 ₸", i19:"Айран — 500 ₸",
+  i20:"Картошка фри — 650 ₸", i21:"Перчик острый — 700 ₸", i22:"Перчик халапеньо — 650 ₸",
+  i23:"Курица +50 г — 700 ₸", i24:"Говядина +50 г — 500 ₸", i25:"Соус (красный/белый) — 150 ₸",
+  loc_h:"Один адрес в Астане.", loc_lead:"Нажмите для маршрута или напишите в WhatsApp прямо в эту точку.",
+  a_dir:"Маршрут", a_call:"Позвонить",
+  branch1_n:"Сыганак", branch1_a:"ул. Сыганак, 52/1, Есильский район, 1 этаж",
+  rev_h:"Что говорят клиенты.",
+  r1:"Лучший донер в Астане 🔥", r1w:"Отзыв на 2ГИС",
+  r2:"Очень вкусный донер, мясо сочное и хорошо приготовлено, овощи свежие, соус отлично дополняет вкус. Порция большая и сытная, всё сделано аккуратно.", r2w:"Отзыв на 2ГИС",
+  r3:"Судя по отзывам — новое заведение, но по названию всё соответствует, всё жёлтое 😁 В донере очень много мяса, это очень радует.", r3w:"Отзыв на 2ГИС",
+  r4:"Шикарные донеры! Намного лучше чем донер на Абая.", r4w:"Отзыв на 2ГИС",
+  c_h:"Что закажете?", c_p:"Напишите в WhatsApp, какой донер и куда доставить — назовём цену и время заранее.",
+  c_btn:"Написать в WhatsApp", f_about:"Донерная в Астане. Готовим при заказе, доставляем по городу.",
+  f_sect:"Разделы", f_map:"Мы на карте", f_city:"Астана"
+ },
+ en:{
+  lm_city:"ASTANA", nav_services:"Menu", nav_loc:"Location", nav_rev:"Reviews", nav_con:"Contact",
+  st_open:"Open now", st_shut:"Closed · opens at 12:00",
+  hero_h1_a:"Doner ", hero_h1_b:"in 10 minutes", hero_h1_c:" — Astana",
+  hero_lead:"Juicy doner at Sygaanak St. 52/1. Made fresh to order, delivered around Astana — just message us on WhatsApp.",
+  btn_order:"Message on WhatsApp", btn_call:"Call",
+  t_rate:"rating on 2GIS", t_rev:"ratings on 2GIS", t_visit_big:"Yes", t_visit:"delivery around Astana",
+  chip1:"Made fresh to order", chip2:"Fast delivery",
+  s1b:"Fast", s1:"Doner ready in 5-10 minutes",
+  s2b:"Delivery", s2:"Quick delivery across Astana",
+  s3b:"Fresh ingredients", s3:"Meat and vegetables fresh daily",
+  s4b:"Any payment", s4:"Card, cash, or QR code",
+  serv_h:"From doner to drinks — the full menu.",
+  serv_lead:"Yellow Doner's menu, pulled from their own 2GIS page: doner, drinks, add-ons.",
+  cat1:"Doner", cat2:"Drinks", cat3:"Extras",
+  i1:"Chicken doner 1x — 1800 ₸", i2:"Chicken doner 1.5x — 2200 ₸",
+  i3:"Beef doner 1x — 2200 ₸", i4:"Beef doner 1.5x — 2500 ₸",
+  i5:"Mixed doner 1x — 2100 ₸", i6:"Mixed doner 1.5x — 2400 ₸",
+  i7:"Coca-Cola 0.5L — 650 ₸", i8:"Coca-Cola can 0.5L — 700 ₸",
+  i9:"Coca-Cola Zero 0.5L — 650 ₸", i10:"Coca-Cola Zero can 0.45L — 700 ₸",
+  i11:"Sprite 0.5L — 650 ₸", i12:"Sprite can 0.45L — 700 ₸",
+  i13:"Fanta 0.5L — 650 ₸", i14:"Fanta can 0.45L — 700 ₸",
+  i15:"Fuse Tea 0.5L — 650 ₸", i16:"Fuse Tea can 0.45L — 700 ₸",
+  i17:"Piko 0.2L — 500 ₸", i18:"Bonaqua 0.5L — 400 ₸", i19:"Ayran — 500 ₸",
+  i20:"French fries — 650 ₸", i21:"Hot pepper — 700 ₸", i22:"Jalapeño — 650 ₸",
+  i23:"Extra chicken +50g — 700 ₸", i24:"Extra beef +50g — 500 ₸", i25:"Sauce (red/white) — 150 ₸",
+  loc_h:"One location in Astana.", loc_lead:"Tap for directions, or message us on WhatsApp directly.",
+  a_dir:"Directions", a_call:"Call",
+  branch1_n:"Sygaanak", branch1_a:"Sygaanak St. 52/1, Esil district, 1st floor",
+  rev_h:"What customers say.",
+  r1:"Best doner in Astana 🔥", r1w:"2GIS review",
+  r2:"Very tasty doner, the meat is juicy and well cooked, vegetables are fresh, the sauce complements it perfectly. The portion is big and filling, everything made with care.", r2w:"2GIS review",
+  r3:"Came to try the new place — Yellow Doner, and it lives up to the name, everything's yellow. Lots of meat in the doner, which is great.", r3w:"2GIS review",
+  r4:"Amazing doner! Much better than the one on Abay.", r4w:"2GIS review",
+  c_h:"What would you like to order?", c_p:"Message us on WhatsApp with your doner and delivery address — we'll quote a price and time up front.",
+  c_btn:"Message on WhatsApp", f_about:"Doner shop in Astana. Made fresh to order, delivered around the city.",
+  f_sect:"Sections", f_map:"Find us", f_city:"Astana"
+ }
+};
+
+const CATS = [
+ {c:'cat1', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>',
+  items:['i1','i2','i3','i4','i5','i6']},
+ {c:'cat2', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h10l-1 12a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3L5 3Z"/><path d="M3 3h14"/><path d="M9 8v4M12 8v4"/></svg>',
+  items:['i7','i8','i9','i10','i11','i12','i13','i14','i15','i16','i17','i18','i19']},
+ {c:'cat3', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
+  items:['i20','i21','i22','i23','i24','i25']}
+];
+
+const LOCS = [
+ {nKey:'branch1_n', aKey:'branch1_a', tel:'+77088880570', wa:'77088880570',
+  map:'https://2gis.kz/astana/geo/70000001114980970', rating:'4.7 ★'}
+];
+
+const WA_TEXT = {
+  kk:"Сәлеметсіз бе! Донер тапсырғым келеді:",
+  ru:"Здравствуйте! Хочу заказать донер:",
+  en:"Hello! I'd like to order a doner:"
+};
+
+let lang = 'ru';
+
+function astanaHour(){
+  const utcMs = Date.now() + new Date().getTimezoneOffset()*60000;
+  return new Date(utcMs + 5*3600000).getHours();
+}
+
+function render(){
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('#langs button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const v = t[el.dataset.t];
+    if(v!==undefined) el.textContent = v;
+  });
+
+  const h1 = document.getElementById('hero-h1');
+  if(h1) h1.innerHTML = `${t.hero_h1_a}<span class="hl">${t.hero_h1_b}</span>${t.hero_h1_c}`;
+
+  const openNow = astanaHour()>=12 && astanaHour()<23;
+  document.getElementById('st-text').textContent = openNow ? t.st_open : t.st_shut;
+  document.getElementById('st-dot').classList.toggle('shut', !openNow);
+
+  document.getElementById('sgrid').innerHTML = CATS.map(cat=>`
+    <div class="card">
+      <div class="chead"><span class="cico">${cat.icon}</span><h3>${t[cat.c]}</h3></div>
+      <ul>${cat.items.map(k=>`<li>${t[k]}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  document.getElementById('locs').innerHTML = LOCS.map(l=>`
+    <div class="loc">
+      <div class="loc-top">
+        <h3>${t[l.nKey]}</h3>
+        <div class="addr">${t[l.aKey]}</div>
+        <div class="loc-meta"><span class="chip2 star">${l.rating}</span><span class="chip2">${t.t_visit}</span></div>
+      </div>
+      <div class="loc-acts">
+        <a href="${l.map}" target="_blank" rel="noopener">${t.a_dir}</a>
+        <a href="tel:${l.tel}">${t.a_call}</a>
+        <a class="w" href="https://wa.me/${l.wa}?text=${encodeURIComponent(WA_TEXT[lang])}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('revs').innerHTML = [
+    [t.r1,t.r1w],[t.r2,t.r2w],[t.r3,t.r3w],[t.r4,t.r4w]
+  ].map(([q,w])=>`
+    <div class="rev"><div class="stars">★★★★★</div><p>${q}</p><div class="who">${w}</div></div>`).join('');
+
+  const link = 'https://wa.me/77088880570?text=' + encodeURIComponent(WA_TEXT[lang]);
+  ['wa-top','wa-hero','wa-cta','wa-fab'].forEach(id=>document.getElementById(id).href = link);
+}
+
+document.getElementById('langs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  lang = b.dataset.lang; render();
+});
+
+const burger = document.getElementById('burger'), drawer = document.getElementById('drawer');
+burger.addEventListener('click', ()=>{
+  const open = drawer.classList.toggle('open');
+  burger.setAttribute('aria-expanded', open);
+});
+drawer.addEventListener('click', e=>{
+  if(e.target.tagName==='A'){ drawer.classList.remove('open'); burger.setAttribute('aria-expanded','false'); }
+});
+
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const io = new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  }),{threshold:.12});
+  document.querySelectorAll('.rise').forEach(el=>io.observe(el));
+}else{
+  document.querySelectorAll('.rise').forEach(el=>el.classList.add('in'));
+}
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
