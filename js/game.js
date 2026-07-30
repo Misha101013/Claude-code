@@ -82,6 +82,23 @@ export class Game {
     });
 
     n.on('host-disconnected', () => this._emit('fatal-error', 'Хост отключился — комната закрыта.'));
+    n.on('host-reconnecting', (p) => this._emit('host-reconnecting', p));
+    n.on('host-reconnected', () => this._emit('host-reconnected', {}));
+
+    n.on('rejoin', (payload, fromId) => {
+      if (!this.isHost) return;
+      if (this.players.has(fromId)) {
+        // Seat was held during the grace period — bring them back up to
+        // speed on whatever broadcast they missed while disconnected.
+        this._resendCurrentState(fromId);
+      } else {
+        // Reconnected too late: we already gave up their seat and told
+        // everyone else. Say so plainly instead of leaving them
+        // half-connected to a room that no longer recognises them.
+        this.net.sendTo(fromId, 'kicked', {});
+      }
+    });
+    n.on('kicked', () => this._emit('fatal-error', 'Не удалось переподключиться вовремя — место в комнате освободили. Зайди заново.'));
 
     n.on('players-update', (p) => this._applyPlayers(p));
     n.on('match-config', (p) => {
@@ -118,6 +135,32 @@ export class Game {
   _applyPlayers(payload) {
     this.players = new Map(payload.players.map((p) => [p.id, p]));
     this._emit('players-changed', this._playersArray());
+  }
+
+  // Best-effort catch-up for someone whose connection just came back:
+  // replay whatever broadcast they might have missed while it was down.
+  _resendCurrentState(playerId) {
+    this.net.sendTo(playerId, 'players-update', { players: this._playersArray() });
+    if (this.phase === 'hide' && this.round) {
+      this.net.sendTo(playerId, 'round-start', {
+        photoUrl: this.round.photoUrl,
+        settings: this.settings,
+        seekerId: this.round.seekerId,
+        roundIndex: this.round.roundIndex,
+        totalRounds: this.round.totalRounds,
+        startedAt: this.round.startedAt,
+      });
+    } else if (this.phase === 'seek' && this.round) {
+      this.net.sendTo(playerId, 'seek-start', {
+        sprites: this.round.spriteList,
+        seekerId: this.round.seekerId,
+        seekSeconds: this.settings.seekSeconds,
+        tapsAllowed: this.round.tapsAllowed,
+        startedAt: this.round.seekStartedAt,
+      });
+    } else if (this.phase === 'lobby') {
+      this.net.sendTo(playerId, 'await-photo', { roundNumber: this.match ? this.match.roundIndex : 0 });
+    }
   }
 
   // ---------------- room ----------------
@@ -214,6 +257,7 @@ export class Game {
       seekerId: payload.seekerId,
       roundIndex: payload.roundIndex,
       totalRounds: payload.totalRounds,
+      startedAt: payload.startedAt,
       sprites: {},
       found: {},
       taps: 0,

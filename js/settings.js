@@ -15,6 +15,7 @@ export const MATCH_DEFAULTS = {
   hints: true,
   blendMeter: true,
   charScale: 1,
+  autoFillHelper: false,
 };
 
 // Descriptors drive the settings UI, so adding a setting here is enough
@@ -55,6 +56,10 @@ export const MATCH_FIELDS = [
   {
     key: 'blendMeter', label: 'Показывать качество маскировки', type: 'toggle',
     hint: 'Живой процент совпадения с фоном, пока красишь.',
+  },
+  {
+    key: 'autoFillHelper', label: 'Подсказка фона', type: 'toggle',
+    hint: 'Раз за раунд можно тапнуть волшебной палочкой — приблизительно подкрасит фон в небольшом круге. Не идеально точно, только для затравки.',
   },
 ];
 

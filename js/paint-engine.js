@@ -35,7 +35,13 @@ export const BRUSHES = [
   { id: 'hard', label: '⬤', title: 'Жёсткая кисть' },
   { id: 'marker', label: '▮', title: 'Маркер' },
   { id: 'spray', label: '✺', title: 'Спрей' },
+  { id: 'smudge', label: '👆', title: 'Палец — растушёвывает и тянет цвета друг в друга' },
 ];
+
+// Once-per-round helper: 22 jittered, semi-transparent dabs scattered
+// through the circle. Deliberately imprecise — an assist, not a cheat.
+const MAGIC_DABS = 22;
+const MAGIC_RADIUS_BOX = 15; // box units
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
@@ -68,6 +74,12 @@ export class PaintEngine {
     this.onBlendChange = null;
     this.onStrokeStart = null;
     this.blend = null;
+    this._smudgeColor = null;
+
+    this.magicHelperEnabled = false;
+    this.magicArmed = false;
+    this._magicUsed = false;
+    this.onMagicUsed = null;
 
     this.image = null;
     this.naturalW = 0; this.naturalH = 0;
@@ -112,7 +124,11 @@ export class PaintEngine {
     this._fit();
     this._resetOffscreen();
     this.blend = null;
+    this._magicUsed = false;
+    this.magicArmed = false;
   }
+
+  get magicAvailable() { return this.magicHelperEnabled && !this._magicUsed; }
 
   _fit() {
     if (!this.image) return;
@@ -239,6 +255,14 @@ export class PaintEngine {
     }
     if (this.phase !== 'painting') return;
 
+    if (this.magicArmed) {
+      const b = this._canvasPointToBox(p.x, p.y);
+      this.magicArmed = false;
+      const used = this.useMagicCircle(b.x, b.y);
+      this.onMagicUsed && this.onMagicUsed(used);
+      return;
+    }
+
     if (this.eyedropperActive) {
       const hex = this.sampleColorAt(p.x, p.y);
       this.setColor(hex);
@@ -250,6 +274,7 @@ export class PaintEngine {
     this.onStrokeStart && this.onStrokeStart();
     const b = this._canvasPointToBox(p.x, p.y);
     this._lastBox = b;
+    if (this.brush.type === 'smudge') this._smudgeColor = this._sampleOffscreenAt(b.x, b.y);
     this._stampAt(b.x, b.y);
     this._redrawSprite();
   }
@@ -320,6 +345,26 @@ export class PaintEngine {
     ctx.clip(this.charPath);
     ctx.fillStyle = this.brush.color;
     const r = this.brush.size / 2;
+    if (this.brush.type === 'smudge') {
+      // Classic finger/smudge tool: carry a colour along the drag,
+      // continuously pulled toward whatever's already under the brush.
+      // Dragging between two painted areas blends them into a gradient
+      // instead of ever laying down a flat new colour.
+      const under = this._sampleOffscreenAt(x, y);
+      if (!this._smudgeColor) this._smudgeColor = under;
+      this._smudgeColor = lerpRgb(this._smudgeColor, under, 0.35);
+      const hex = rgbToHex(this._smudgeColor);
+      const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+      grad.addColorStop(0, hexToRgba(hex, 0.55));
+      grad.addColorStop(1, hexToRgba(hex, 0));
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = 1;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
+    }
     if (this.brush.type === 'spray') {
       const dots = Math.max(10, Math.round(r * 1.6));
       for (let i = 0; i < dots; i++) {
@@ -377,6 +422,72 @@ export class PaintEngine {
     return '#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('');
   }
 
+  // Sample the sprite-in-progress itself (box-space coords), for the
+  // smudge tool. getImageData ignores the context's own transform, so
+  // this needs raw device pixels — hence the REF multiply.
+  _sampleOffscreenAt(bx, by) {
+    const x = clamp(Math.round(bx * REF), 0, this.offscreen.width - 1);
+    const y = clamp(Math.round(by * REF), 0, this.offscreen.height - 1);
+    const d = this.offCtx.getImageData(x, y, 1, 1).data;
+    return { r: d[0], g: d[1], b: d[2] };
+  }
+
+  // ---- once-per-round background helper ----
+
+  useMagicCircle(boxX, boxY) {
+    if (!this.magicAvailable || !this.image) return false;
+    this._magicUsed = true;
+
+    const r = this.spriteScreenRect();
+    const k = this.k;
+    const cx = r.x + boxX * k;
+    const cy = r.y + boxY * k;
+    const sampleSpreadPx = Math.max(4, MAGIC_RADIUS_BOX * k * 0.5);
+
+    // Average a ring of samples so one stray pixel (a leaf, a highlight)
+    // can't dominate the whole patch.
+    const samples = [this.sampleColorAt(cx, cy)];
+    for (let i = 0; i < 6; i++) {
+      const ang = (i / 6) * Math.PI * 2;
+      samples.push(this.sampleColorAt(
+        cx + Math.cos(ang) * sampleSpreadPx,
+        cy + Math.sin(ang) * sampleSpreadPx,
+      ));
+    }
+    const base = averageHexColors(samples);
+
+    this._pushUndo();
+    const ctx = this.offCtx;
+    ctx.save();
+    ctx.clip(this.charPath);
+    ctx.beginPath();
+    ctx.arc(boxX, boxY, MAGIC_RADIUS_BOX, 0, Math.PI * 2);
+    ctx.clip();
+    // Deliberately imprecise: a scatter of soft, jittered dabs, not a
+    // flat perfect fill — a helper, not a cheat, and never a substitute
+    // for actually matching the photo by eye.
+    for (let i = 0; i < MAGIC_DABS; i++) {
+      const ang = Math.random() * Math.PI * 2;
+      const dist = Math.sqrt(Math.random()) * MAGIC_RADIUS_BOX;
+      const dabX = boxX + Math.cos(ang) * dist;
+      const dabY = boxY + Math.sin(ang) * dist;
+      const dabR = MAGIC_RADIUS_BOX * (0.4 + Math.random() * 0.3);
+      const hex = jitterHexColor(base, 20);
+      const grad = ctx.createRadialGradient(dabX, dabY, 0, dabX, dabY, dabR);
+      grad.addColorStop(0, hexToRgba(hex, 0.55));
+      grad.addColorStop(1, hexToRgba(hex, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(dabX, dabY, dabR, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    this._redrawSprite();
+    this.recomputeBlend();
+    return true;
+  }
+
   // ---- camouflage quality ----
 
   recomputeBlend() {
@@ -410,6 +521,34 @@ export class PaintEngine {
 function hexToRgba(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+function hexToRgb(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
+}
+
+function rgbToHex({ r, g, b }) {
+  return '#' + [r, g, b].map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
+}
+
+function lerpRgb(a, b, t) {
+  return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
+}
+
+function averageHexColors(hexes) {
+  const sum = { r: 0, g: 0, b: 0 };
+  for (const hex of hexes) {
+    const c = hexToRgb(hex);
+    sum.r += c.r; sum.g += c.g; sum.b += c.b;
+  }
+  return rgbToHex({ r: sum.r / hexes.length, g: sum.g / hexes.length, b: sum.b / hexes.length });
+}
+
+function jitterHexColor(hex, amount) {
+  const c = hexToRgb(hex);
+  const j = () => (Math.random() * 2 - 1) * amount;
+  return rgbToHex({ r: c.r + j(), g: c.g + j(), b: c.b + j() });
 }
 
 // Shared placement math: given a normalized (nx, ny) anchor, a target

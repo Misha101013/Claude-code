@@ -14,6 +14,11 @@
 </head>
 <body>
 
+<div id="connection-banner" class="connection-banner" hidden>
+  <span class="connection-banner-spinner" aria-hidden="true"></span>
+  <span>Связь прервалась, переподключаемся…</span>
+</div>
+
 <div class="app-shell">
 
   <div class="bg-blob bg-blob--1" aria-hidden="true"></div>
@@ -183,6 +188,7 @@
         <button class="icon-btn icon-btn--wheel" id="tool-wheel" type="button" title="Цвет">
           <span class="wheel-swatch" id="wheel-swatch"></span>
         </button>
+        <button class="icon-btn icon-btn--magic" id="tool-magic" type="button" title="Раз за раунд: приблизительно подкрасить фон в круге" hidden>🪄</button>
         <button class="icon-btn icon-btn--done" id="btn-hide-done" type="button" title="Готово" disabled>✓</button>
       </div>
 

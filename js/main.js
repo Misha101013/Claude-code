@@ -280,6 +280,7 @@ function renderRulesSummary() {
   ];
   if (s.hints) chips.push('💡 подсказки');
   if (s.blendMeter) chips.push('📊 счётчик маскировки');
+  if (s.autoFillHelper) chips.push('🪄 подсказка фона');
   $('lobby-rules').innerHTML = chips
     .map((c) => `<span class="rule-chip">${c}</span>`).join('');
 }
@@ -325,6 +326,12 @@ game.on('players-changed', (players) => {
 game.on('settings-changed', () => renderRulesSummary());
 game.on('await-photo', () => { enterLobby(); });
 game.on('fatal-error', (msg) => { alert(msg); location.reload(); });
+
+// A dropped connection is retried silently a few times before it's
+// treated as real (see net.js) — most blips never make it past this
+// banner, and it's non-blocking so nothing on screen is interrupted.
+game.on('host-reconnecting', () => { $('connection-banner').hidden = false; });
+game.on('host-reconnected', () => { $('connection-banner').hidden = true; });
 
 $('btn-copy-code').addEventListener('click', async () => {
   try {
@@ -420,6 +427,12 @@ function ensureEngine() {
     engine.onColorPicked = (hex) => setActiveColor(hex);
     engine.onBlendChange = (score) => updateBlendBadge(score);
     engine.onStrokeStart = () => { $('wheel-popover').hidden = true; };
+    engine.onMagicUsed = (used) => {
+      if (!used) return;
+      $('tool-magic').disabled = true;
+      $('hide-hint').textContent = 'Закрасься';
+      sfx.tap();
+    };
   }
   return engine;
 }
@@ -506,6 +519,16 @@ $('tool-wheel').addEventListener('click', () => {
 });
 $('wheel-close').addEventListener('click', () => { $('wheel-popover').hidden = true; });
 
+$('tool-magic').addEventListener('click', () => {
+  if (!engine || !engine.magicAvailable) return;
+  engine.magicArmed = true;
+  engine.eyedropperActive = false;
+  $('tool-eyedropper').classList.remove('is-selected');
+  $('wheel-popover').hidden = true;
+  $('hide-hint').textContent = 'Тапни в трудном для закраски месте';
+  sfx.tap();
+});
+
 $('hide-zoom-in').addEventListener('click', () => engine && engine.zoomer.zoomBy(1.4));
 $('hide-zoom-out').addEventListener('click', () => engine && engine.zoomer.zoomBy(1 / 1.4));
 $('hide-zoom-reset').addEventListener('click', () => engine && engine.zoomer.reset());
@@ -527,7 +550,10 @@ async function beginHidePhase(payload) {
   eng.setCharacter(playerSettings.character);
   eng.setCharScale(game.settings.charScale);
   eng.eyedropperActive = false;
+  eng.magicHelperEnabled = !!game.settings.autoFillHelper;
   $('tool-eyedropper').classList.remove('is-selected');
+  $('tool-magic').hidden = !eng.magicHelperEnabled;
+  $('tool-magic').disabled = false;
   await eng.loadPhoto(payload.photoUrl);
   eng.beginPlacement();
 

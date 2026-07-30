@@ -59,6 +59,33 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
 
 :focus-visible { outline: 2px solid var(--accent-3); outline-offset: 2px; }
 
+/* ---------- connection banner ---------- */
+
+.connection-banner {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex; align-items: center; gap: 9px;
+  background: rgba(255,210,63,.16);
+  border: 1px solid rgba(255,210,63,.45);
+  color: var(--accent-3);
+  font-weight: 700; font-size: .82rem;
+  padding: 9px 16px;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px -10px rgba(0,0,0,.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.connection-banner-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255,210,63,.35); border-top-color: var(--accent-3);
+  animation: spin 0.9s linear infinite;
+  flex-shrink: 0;
+}
+@media (prefers-reduced-motion: reduce) { .connection-banner-spinner { animation-duration: 2s; } }
+
 /* ---------- shell & ambience ---------- */
 
 .app-shell {
@@ -551,8 +578,20 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 26px; }
   font-size: 1.02rem; cursor: pointer; color: var(--paper); padding: 0;
 }
 .icon-btn.is-selected { border-color: var(--accent-2); }
+.icon-btn:disabled { opacity: .35; cursor: not-allowed; }
 .icon-btn--done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 800; }
 .icon-btn--done:disabled { opacity: .4; }
+.icon-btn--magic {
+  border-color: rgba(255,210,63,.55);
+  box-shadow: 0 0 0 2px rgba(255,210,63,.12);
+  animation: magic-glow 2.2s ease-in-out infinite;
+}
+.icon-btn--magic:disabled { animation: none; box-shadow: none; border-color: var(--ink-line); }
+@media (prefers-reduced-motion: reduce) { .icon-btn--magic { animation: none; } }
+@keyframes magic-glow {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(255,210,63,.12); }
+  50% { box-shadow: 0 0 0 5px rgba(255,210,63,.22); }
+}
 .icon-btn--wheel { padding: 3px; }
 .wheel-swatch {
   width: 100%; height: 100%; border-radius: 50%; display: block;
