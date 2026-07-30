@@ -257,13 +257,16 @@ input[type="range"] {
   min-height: 0;
   overflow: hidden;
   background: #000;
-  touch-action: none;
+  /* pinch-zoom (not none): keeps single-finger drag captured by our own
+     paint/tap handlers, but still lets the browser handle a two-finger
+     pinch so players can zoom in on the photo for precise brushwork. */
+  touch-action: pinch-zoom;
 }
 #canvas-photo, #canvas-paint, #canvas-seek {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  touch-action: none;
+  touch-action: pinch-zoom;
 }
 
 .status-pill {
@@ -329,14 +332,6 @@ input[type="range"] {
   padding: 10px 12px max(10px, env(safe-area-inset-bottom));
   display: flex; flex-direction: column; gap: 10px;
 }
-
-.swatch-strip {
-  display: flex;
-  gap: 7px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-}
-.swatch-strip .swatch { flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; }
 
 .icon-strip-row { display: flex; align-items: center; gap: 8px; }
 .icon-strip { display: flex; align-items: center; gap: 8px; overflow-x: auto; flex: 1; min-width: 0; }

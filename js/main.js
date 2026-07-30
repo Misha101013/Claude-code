@@ -1,7 +1,7 @@
 import { Game } from './game.js';
 import { PaintEngine, BRUSHES, drawSpriteOnCanvas, isPointInCharacter, spriteRect } from './paint-engine.js';
 import { buildCharacterPath } from './shapes.js';
-import { PALETTE, AVATAR_COLORS } from './palette-data.js';
+import { AVATAR_COLORS } from './palette-data.js';
 import { DEMO_SCENES, paintDemoScene, demoSceneDataUrl } from './demo-scenes.js';
 import { IbisColorWheel } from './color-wheel.js';
 
@@ -226,7 +226,6 @@ function ensureEngine() {
 function setActiveColor(hex) {
   engine.setColor(hex);
   $('wheel-swatch').style.background = hex;
-  highlightPaletteSwatch(hex);
   if (colorWheel) colorWheel.setColor(hex);
 }
 
@@ -248,28 +247,7 @@ function renderBrushRow() {
   });
 }
 
-function renderPaletteRow() {
-  const row = $('palette-row');
-  row.innerHTML = '';
-  for (const hex of PALETTE) {
-    const sw = document.createElement('button');
-    sw.type = 'button';
-    sw.className = 'swatch';
-    sw.style.background = hex;
-    sw.dataset.hex = hex;
-    sw.addEventListener('click', () => setActiveColor(hex));
-    row.appendChild(sw);
-  }
-}
-
-function highlightPaletteSwatch(hex) {
-  $('palette-row').querySelectorAll('.swatch').forEach((s) => {
-    s.classList.toggle('is-selected', s.dataset.hex.toLowerCase() === hex.toLowerCase());
-  });
-}
-
 renderBrushRow();
-renderPaletteRow();
 
 $('brush-size').addEventListener('input', (e) => engine && engine.setSize(parseInt(e.target.value, 10)));
 $('tool-undo').addEventListener('click', () => engine && engine.undo());
@@ -318,15 +296,26 @@ async function beginHidePhase(photoUrl, hideSeconds) {
 
   hideDeadline = Date.now() + hideSeconds * 1000;
   clearInterval(hideTimerHandle);
-  hideTimerHandle = setInterval(() => {
-    const left = Math.max(0, Math.ceil((hideDeadline - Date.now()) / 1000));
-    $('hide-timer').textContent = left;
-    if (left <= 0) {
-      clearInterval(hideTimerHandle);
-      if (!hideSubmitted) submitHide();
-    }
-  }, 250);
+  hideTimerHandle = setInterval(checkHideDeadline, 250);
 }
+
+function checkHideDeadline() {
+  const left = Math.max(0, Math.ceil((hideDeadline - Date.now()) / 1000));
+  $('hide-timer').textContent = left;
+  if (left <= 0) {
+    clearInterval(hideTimerHandle);
+    if (!hideSubmitted) submitHide();
+  }
+}
+
+// Phones lock/background mid-round all the time (that's half the point of
+// "hide" — you put the phone down). setInterval is throttled while hidden,
+// so the moment we're foregrounded again, check immediately instead of
+// waiting for the next tick — the sooner we submit, the less likely we
+// race the host's own safety-net timeout (see submitHide's phase guard).
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && hideTimerHandle) checkHideDeadline();
+});
 
 $('btn-place-here').addEventListener('click', () => {
   if (!engine || engine.phase !== 'placing') return;
@@ -344,6 +333,12 @@ $('btn-hide-done').addEventListener('click', () => {
 
 function submitHide() {
   if (hideSubmitted || !engine) return;
+  // If our own phase already moved past 'hide' (a 'seek-started' or
+  // 'round-ended' broadcast came in — e.g. while this tab was
+  // backgrounded and its timer got throttled), a stale auto-submit
+  // must not fire: it would stomp the screen that event already
+  // correctly switched us to, and nothing would ever switch us back.
+  if (game.phase !== 'hide') { hideSubmitted = true; clearInterval(hideTimerHandle); return; }
   hideSubmitted = true;
   clearInterval(hideTimerHandle);
   $('btn-hide-done').disabled = true;
