@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art&Coffee — кофейня и изостудия в Астане</title>
+<meta name="description" content="Art&Coffee — уютная кофейня и творческая студия на ул. Сыганак, 52/2 в Астане. Кофе, выпечка, мастер-классы по рисованию.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%23A6592F'/%3E%3Cpath d='M9 12h20l-1.8 16.5A7 7 0 0 1 20.3 35h-.6a7 7 0 0 1-6.9-6.5L9 12z' fill='%23fff'/%3E%3Cpath d='M29 15h2.5a4 4 0 0 1 0 8H29' fill='none' stroke='%23fff' stroke-width='2.4'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#FBF4EA; --paper:#F5E7D6; --line:#E6D3B7; --ink:#2B1B12; --grey:#75655A;
+  --coffee:#A6592F; --coffee-deep:#7A3E1D; --coffee-pale:#F2E1C9; --wa:#25D366;
+  --r:16px; --pad:clamp(18px,5vw,64px); --max:1200px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--cream);color:var(--ink);font-family:'Inter',system-ui,sans-serif;
+  font-weight:400;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--coffee);outline-offset:3px;border-radius:6px}
+.inner{max-width:var(--max);margin:0 auto}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.02em;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(32px,5.4vw,58px);font-weight:700;line-height:1.05}
+h2{font-size:clamp(24px,3.6vw,40px)}
+h3{font-size:clamp(15px,1.7vw,19px)}
+.lead{font-size:clamp(15px,1.6vw,18px);color:var(--grey);font-weight:400}
+.mono{font-family:'JetBrains Mono',monospace}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--coffee-deep);
+  background:var(--coffee-pale);border:1px solid var(--line);padding:6px 13px;border-radius:100px;letter-spacing:.02em}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--coffee);flex:none}
+.dot.shut{background:#C6553F}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;
+  border-radius:11px;font-size:15px;font-weight:600;border:1px solid transparent;cursor:pointer;
+  transition:.2s ease;white-space:nowrap;font-family:'Inter',sans-serif}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-wa:hover{background:#1EBE5A;transform:translateY(-1px)}
+.btn-blue{background:var(--coffee);color:#fff}
+.btn-blue:hover{background:var(--coffee-deep);transform:translateY(-1px)}
+.btn-out{border-color:var(--line);color:var(--ink);background:#fff}
+.btn-out:hover{border-color:var(--coffee)}
+.btn svg{width:18px;height:18px;flex:none}
+
+/* logo */
+.logo{display:flex;align-items:center;gap:10px;margin-right:auto;flex:none}
+.mark{width:36px;height:36px;flex:none;border-radius:11px;background:var(--coffee);
+  display:grid;place-items:center;box-shadow:0 4px 14px rgba(166,89,47,.35)}
+.mark svg{width:19px;height:19px}
+.wordmark{display:flex;flex-direction:column;line-height:1}
+.wordmark .a{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.02em}
+.wordmark .a em{color:var(--coffee);font-style:normal}
+.wordmark .b{font-size:8.5px;font-weight:600;letter-spacing:.28em;color:var(--grey);margin-top:3px}
+
+/* header */
+header{position:sticky;top:0;z-index:60;background:rgba(251,244,234,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar{max-width:var(--max);margin:0 auto;padding:11px var(--pad);display:flex;align-items:center;gap:16px}
+.menu-links{display:flex;gap:22px;font-size:14px;color:var(--grey);font-weight:500}
+.menu-links a{position:relative;padding:2px 0}
+.menu-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-2px;height:1.5px;background:var(--coffee);transition:right .25s ease}
+.menu-links a:hover{color:var(--ink)}
+.menu-links a:hover::after{right:0}
+.tel{font-weight:700;font-size:15px;letter-spacing:-.01em;font-family:'JetBrains Mono',monospace}
+.switches{display:flex;align-items:center;gap:8px}
+.langs{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:3px}
+.langs button{border:0;background:transparent;color:var(--grey);cursor:pointer;font-family:inherit;
+  font-size:12px;font-weight:700;padding:6px 10px;border-radius:100px;transition:.18s;text-transform:uppercase}
+.langs button:hover{color:var(--ink)}
+.langs button.on{background:#fff;color:var(--coffee-deep);box-shadow:0 1px 3px rgba(43,27,18,.08)}
+#burger{display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--paper);
+  cursor:pointer;place-items:center;flex:none}
+#burger svg{width:17px;height:17px}
+.drawer{display:none;border-top:1px solid var(--line);background:#fff;padding:8px var(--pad) 16px}
+.drawer.open{display:block}
+.drawer a{display:block;padding:12px 0;font-size:16px;border-bottom:1px solid var(--line)}
+.drawer .tel-m{font-weight:700;font-family:'JetBrains Mono',monospace;border:0}
+
+@media(max-width:1080px){.menu-links{display:none}}
+@media(max-width:860px){#burger{display:grid}}
+@media(max-width:760px){.tel{display:none}}
+@media(max-width:560px){
+  .bar{gap:8px;padding-left:16px;padding-right:16px}
+  .bar .btn-wa{padding:10px 13px}
+  .bar .btn-wa .lbl{display:none}
+  .wordmark .b{display:none}
+  .langs button{padding:6px 8px;font-size:11px}
+}
+
+/* hero */
+.hero{padding:clamp(30px,5vw,60px) var(--pad) clamp(38px,6vw,70px);position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,56px);align-items:center;position:relative}
+.hero h1{margin:16px 0 18px}
+.hero .lead{max-width:46ch}
+.hero h1 .hl{color:var(--coffee)}
+.cta{display:flex;flex-wrap:wrap;gap:11px;margin-top:26px}
+.trust{display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,42px);margin-top:32px;padding-top:26px;border-top:1px solid var(--line)}
+.trust div span{display:block;font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.trust div small{font-size:12.5px;color:var(--grey)}
+
+.hero-art{position:relative;width:min(420px,100%);aspect-ratio:1/1;margin:0 auto}
+.hero-art .ring{position:absolute;inset:0;border-radius:50%;background:var(--coffee-pale)}
+.hero-art .ring2{position:absolute;inset:12%;border-radius:50%;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:0 20px 50px rgba(122,62,29,.16)}
+.hero-art .cup{width:34%;color:var(--coffee)}
+.pulse-wrap{position:absolute;left:-6%;right:-6%;top:50%;transform:translateY(-50%);height:70px;pointer-events:none}
+.pulse-line{width:100%;height:100%}
+.pulse-path{fill:none;stroke:var(--coffee);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:640;stroke-dashoffset:640;animation:draw 3.2s ease-in-out infinite}
+@keyframes draw{
+  0%{stroke-dashoffset:640}
+  55%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:-640}
+}
+.hero-art .chip{position:absolute;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:9px 13px;font-size:12.5px;font-weight:600;box-shadow:0 10px 24px rgba(43,27,18,.08);
+  display:flex;align-items:center;gap:7px}
+.hero-art .chip svg{width:15px;height:15px;color:var(--coffee);flex:none}
+.hero-art .chip.c1{top:6%;right:2%}
+.hero-art .chip.c2{bottom:8%;left:0}
+@media(max-width:860px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-art{order:-1;width:200px;height:200px;aspect-ratio:auto;margin:0 auto 12px}
+  .hero-art .chip{display:none}
+}
+
+/* strip */
+.strip{background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip-in{max-width:var(--max);margin:0 auto;padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:18px}
+.si{display:flex;gap:12px;align-items:flex-start}
+.si b{display:block;font-size:14.5px;font-weight:700}
+.si p{font-size:13px;color:var(--grey);line-height:1.45}
+.ic{width:34px;height:34px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--coffee)}
+.ic svg{width:17px;height:17px}
+
+section{padding:clamp(46px,6.5vw,88px) var(--pad)}
+.head{max-width:56ch;margin-bottom:clamp(26px,4vw,44px)}
+.head h2{margin:12px 0 12px}
+
+/* services */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:#fff;transition:.22s ease}
+.card:hover{box-shadow:0 10px 28px rgba(43,27,18,.08);transform:translateY(-2px);border-color:#E9CFA3}
+.card .chead{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.card .cico{width:38px;height:38px;border-radius:10px;background:var(--coffee-pale);color:var(--coffee-deep);display:grid;place-items:center;flex:none}
+.card .cico svg{width:19px;height:19px}
+.card ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px}
+.card li{font-size:13px;color:var(--grey);background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:5px 11px}
+
+/* locations */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.loc{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.22s ease}
+.loc:hover{box-shadow:0 10px 28px rgba(43,27,18,.08)}
+.loc-top{padding:clamp(18px,2.4vw,24px);flex:1}
+.loc-top h3{margin-bottom:6px}
+.loc-top .addr{font-size:14px;color:var(--grey)}
+.loc-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip2{font-size:12px;color:var(--grey);background:var(--paper);border:1px solid var(--line);border-radius:100px;padding:4px 11px}
+.chip2.star{color:var(--coffee-deep);font-weight:600}
+.loc-acts{display:flex;border-top:1px solid var(--line)}
+.loc-acts a{flex:1;padding:13px 8px;text-align:center;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+.loc-acts a+a{border-left:1px solid var(--line)}
+.loc-acts a:hover{background:var(--paper)}
+.loc-acts .w{color:#0F8C4B}
+.loc-acts svg{width:15px;height:15px;flex:none}
+.info-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.info-list li{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;border-bottom:1px dashed var(--line);padding-bottom:10px}
+.info-list li b{font-weight:600;color:var(--grey);font-weight:500}
+.info-list li span{font-weight:600;text-align:right}
+
+/* reviews */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rev{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:var(--paper)}
+.stars{color:var(--coffee-deep);font-size:13px;letter-spacing:2px;margin-bottom:12px}
+.rev p{font-size:15px;line-height:1.6}
+.rev .who{margin-top:14px;font-size:12.5px;color:var(--grey)}
+
+.contact{background:var(--ink);color:#fff;border-radius:clamp(20px,3vw,30px);padding:clamp(28px,5vw,58px);text-align:center;position:relative;overflow:hidden}
+.contact::after{content:'';position:absolute;width:340px;height:340px;right:-90px;top:-120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(166,89,47,.55),transparent 68%)}
+.contact>*{position:relative}
+.contact h2{color:#fff;margin-bottom:12px}
+.contact p{opacity:.72;max-width:48ch;margin:0 auto 26px;font-weight:400}
+.contact .cta{justify-content:center}
+.contact .btn-out{background:transparent;border-color:rgba(255,255,255,.28);color:#fff}
+.contact .btn-out:hover{border-color:#fff}
+
+footer{border-top:1px solid var(--line);padding:clamp(34px,4.5vw,54px) var(--pad);background:var(--paper)}
+.fgrid{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px}
+.fgrid h4{font-size:13px;font-weight:700;margin-bottom:11px}
+.fgrid p,.fgrid a{font-size:13.5px;color:var(--grey);line-height:2}
+.fgrid a:hover{color:var(--ink)}
+.copy{max-width:var(--max);margin:28px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--grey);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+
+.fab{position:fixed;right:18px;bottom:18px;z-index:70;width:56px;height:56px;border-radius:50%;background:var(--wa);
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(37,211,102,.42);transition:transform .2s}
+.fab:hover{transform:scale(1.06)}
+.fab svg{width:28px;height:28px}
+
+.note{margin-top:20px;font-size:12.5px;color:var(--grey);border-left:2px solid var(--coffee);padding-left:13px;max-width:66ch;line-height:1.6}
+.note b{color:var(--coffee-deep);font-weight:700}
+
+.rise{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rise.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+  .rise{opacity:1;transform:none}
+  .pulse-path{stroke-dashoffset:0;animation:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="logo" href="#top" aria-label="Art&Coffee">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h13l-1.1 10a4.2 4.2 0 0 1-4.18 3.8h-2.44A4.2 4.2 0 0 1 6.1 17L5 7z" fill="#fff"/><path d="M18 9h1.6a2.6 2.6 0 0 1 0 5.2H18" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg></span>
+      <span class="wordmark">
+        <span class="a">ART<em>&</em>COFFEE</span>
+        <span class="b" data-t="lm_city">АСТАНА</span>
+      </span>
+    </a>
+
+    <nav class="menu-links">
+      <a href="#services" data-t="nav_services"></a>
+      <a href="#locations" data-t="nav_loc"></a>
+      <a href="#reviews" data-t="nav_rev"></a>
+      <a href="#contact" data-t="nav_con"></a>
+    </nav>
+
+    <a class="tel" href="tel:+77782236782">+7 778 223 6782</a>
+
+    <div class="switches">
+      <div class="langs" id="langs" role="group" aria-label="Language">
+        <button data-lang="kk">KK</button>
+        <button data-lang="ru">RU</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <button id="burger" aria-label="Menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+
+    <a class="btn btn-wa" id="wa-top" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+      <span class="lbl">WhatsApp</span>
+    </a>
+  </div>
+
+  <div class="drawer" id="drawer">
+    <a href="#services" data-t="nav_services"></a>
+    <a href="#locations" data-t="nav_loc"></a>
+    <a href="#reviews" data-t="nav_rev"></a>
+    <a href="#contact" data-t="nav_con"></a>
+    <a class="tel-m" href="tel:+77782236782">+7 778 223 6782</a>
+  </div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-grid inner">
+    <div class="rise">
+      <span class="tag"><span class="dot" id="st-dot"></span> <span id="st-text"></span></span>
+      <h1 id="hero-h1"></h1>
+      <p class="lead" data-t="hero_lead"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-hero" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="btn_order"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77782236782"><span data-t="btn_call"></span> +7 778 223 6782</a>
+      </div>
+      <div class="trust">
+        <div><span id="t1-num"></span><small data-t="t1_lbl"></small></div>
+        <div><span data-t="t2_num"></span><small data-t="t2_lbl"></small></div>
+        <div><span data-t="t3_num"></span><small data-t="t3_lbl"></small></div>
+      </div>
+    </div>
+
+    <div class="hero-art rise">
+      <div class="ring"></div>
+      <div class="ring2">
+        <svg class="cup" viewBox="0 0 24 24" fill="none"><path d="M5 7h13l-1.1 10a4.2 4.2 0 0 1-4.18 3.8h-2.44A4.2 4.2 0 0 1 6.1 17L5 7z" fill="currentColor"/><path d="M18 9h1.6a2.6 2.6 0 0 1 0 5.2H18" stroke="currentColor" stroke-width="1.7" fill="none" stroke-linecap="round"/><path d="M9 4c0 1-1 1-1 2M13 4c0 1-1 1-1 2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <div class="pulse-wrap">
+        <svg class="pulse-line" viewBox="0 0 400 70" preserveAspectRatio="none">
+          <path class="pulse-path" d="M0,35 L110,35 L130,10 L150,60 L170,35 L400,35"/>
+        </svg>
+      </div>
+      <div class="chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5A2.5 2.5 0 0 1 16 14h2a3 3 0 0 0 3-3c0-4.4-4-8-9-8z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="11" r="1"/></svg><span data-t="chip1"></span></div>
+      <div class="chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 8h14l-1 10a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 8z"/><path d="M3 8h18"/></svg><span data-t="chip2"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="strip-in">
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div><div><b data-t="s1b"></b><p data-t="s1"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5A2.5 2.5 0 0 1 16 14h2a3 3 0 0 0 3-3c0-4.4-4-8-9-8z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="11" r="1"/></svg></div><div><b data-t="s2b"></b><p data-t="s2"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="10" rx="1.5"/><path d="M2 19h20"/></svg></div><div><b data-t="s3b"></b><p data-t="s3"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/></svg></div><div><b data-t="s4b"></b><p data-t="s4"></p></div></div>
+  </div>
+</div>
+
+<section id="services">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_services"></span>
+      <h2 data-t="serv_h"></h2>
+      <p class="lead" data-t="serv_lead"></p>
+    </div>
+    <div class="sgrid" id="sgrid"></div>
+    <p class="note"><b data-t="note_label"></b> <span data-t="note1"></span></p>
+  </div>
+</section>
+
+<section id="locations" style="background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_loc"></span>
+      <h2 data-t="loc_h"></h2>
+      <p class="lead" data-t="loc_lead"></p>
+    </div>
+    <div class="lgrid" id="locs"></div>
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_rev"></span>
+      <h2 data-t="rev_h"></h2>
+    </div>
+    <div class="rgrid" id="revs"></div>
+    <p class="note"><b data-t="note_label"></b> <span data-t="note2"></span></p>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <div class="contact rise" id="contact">
+      <h2 data-t="c_h"></h2>
+      <p data-t="c_p"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-cta" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="c_btn"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77782236782">+7 778 223 6782</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fgrid">
+    <div>
+      <a class="logo" href="#top" style="margin-bottom:12px" aria-label="Art&Coffee">
+        <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M5 7h13l-1.1 10a4.2 4.2 0 0 1-4.18 3.8h-2.44A4.2 4.2 0 0 1 6.1 17L5 7z" fill="#fff"/><path d="M18 9h1.6a2.6 2.6 0 0 1 0 5.2H18" stroke="#fff" stroke-width="1.7" fill="none" stroke-linecap="round"/></svg></span>
+        <span class="wordmark"><span class="a">ART<em>&</em>COFFEE</span><span class="b" data-t="lm_city"></span></span>
+      </a>
+      <p><span data-t="f_about"></span></p>
+    </div>
+    <div>
+      <h4 data-t="nav_con"></h4>
+      <a href="tel:+77782236782">+7 778 223 6782</a><br>
+      <a href="tel:+77781774810">+7 778 177 4810</a><br>
+      <a href="https://wa.me/77471053329" target="_blank" rel="noopener">WhatsApp</a>
+    </div>
+    <div>
+      <h4 data-t="f_sect"></h4>
+      <a href="#services" data-t="nav_services"></a><br>
+      <a href="#locations" data-t="nav_loc"></a><br>
+      <a href="#reviews" data-t="nav_rev"></a>
+    </div>
+    <div>
+      <h4 data-t="f_map"></h4>
+      <a href="https://2gis.kz/astana/geo/70000001067097756" target="_blank" rel="noopener">2ГИС</a><br>
+      <a href="#locations" data-t="f_all"></a>
+    </div>
+  </div>
+  <div class="copy">
+    <span>© <span id="yr"></span> Art&Coffee, <span data-t="f_city"></span></span>
+    <span>2ГИС</span>
+  </div>
+</footer>
+
+<a class="fab" id="wa-fab" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="#fff"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+</a>
+
+<script>
+const T = {
+ kk:{
+  lm_city:"АСТАНА", nav_services:"Мәзір", nav_loc:"Мекенжай", nav_rev:"Пікірлер", nav_con:"Байланыс",
+  st_open:"Қазір ашық", st_shut:"Жабық · 10:00-де ашылады",
+  hero_h1_a:"Кофе, десерт және өз ", hero_h1_b:"изостудиясы", hero_h1_c:" — бір ауладa",
+  hero_lead:"Сыганак көшесі, 52/2 мекенжайындағы жайлы кофейня: авторлық кофе, круассандар және қасында сурет салу студиясы. Күн сайын 10:00–21:00 жұмыс істейміз.",
+  btn_order:"WhatsApp-қа жазу", btn_call:"Қоңырау шалу",
+  t1_lbl:"2ГИС-тегі пікір", t2_num:"10:00–21:00", t2_lbl:"күн сайын", t3_num:"5 мин", t3_lbl:"«Сыганак» аялдамасынан",
+  chip1:"Өз изостудиясы", chip2:"Кофе өзіңізбен алып кету",
+  s1b:"Күнделікті жаңа піскен", s1:"Круассандар мен донаттар күн сайын",
+  s2b:"Жанындa изостудия", s2:"Балалар мен ересектерге сурет салу",
+  s3b:"Жұмыс істеуге жайлы", s3:"Ноутбукпен келуге болады, Wi-Fi бар",
+  s4b:"Кез келген төлем", s4:"Карта, қолма-қол, аударым, QR-код",
+  serv_h:"Эспрессодан мастер-класқа дейін.",
+  serv_lead:"Мәзір мен белсенділіктер — біздің 2ГИС парағымыздағы деректер бойынша.",
+  cat1:"Сусындар", cat2:"Нан өнімдері мен десерттер", cat3:"Изостудия және мастер-класстар", cat4:"Кеңістік",
+  i1:"Кофе өзіңізбен алып кету", i2:"Шай өзіңізбен алып кету", i3:"Смузи", i4:"Сүт коктейльдері", i5:"Ыстық шоколад", i6:"Какао", i7:"Лимонад",
+  i8:"Круассандар", i9:"Донаттар", i10:"Кофеге арналған нан өнімдері",
+  i11:"Балаларға арналған сурет салу", i12:"Ересектерге арналған сурет салу", i13:"Мастер-класстар", i14:"Шығармашылық кездесулер",
+  i15:"Wi-Fi", i16:"Ноутбукпен отыруға орын", i17:"10 орынға дейін", i18:"Қолжетімді орта (пандус)",
+  loc_h:"Бізді Сыганак, 52/2 мекенжайынан табуға болады.", loc_lead:"Есіл ауданы, «Сыганак» аялдамасынан 5 минут жаяу.",
+  a_dir:"Бағыт", a_call:"Қоңырау",
+  info_h:"Білгеніңіз пайдалы",
+  info_check:"Орташа чек", info_check_val:"~2000 ₸",
+  info_pay:"Төлем", info_pay_val:"Карта, қолма-қол, аударым, QR-код",
+  info_access:"Қолжетімді орта", info_access_val:"Пандус, мүгедектерге арналған кіреберіс",
+  info_seats:"Орындар", info_seats_val:"10 орынға дейін, ноутбукпен отыруға болады",
+  rev_h:"Қонақтар не дейді.",
+  r1:"Керемет атмосфера😍 Ары қарай изостудия да бар. Керемет капучино үшін баристаға рахмет 👍 круассандары өте дәмді", r1w:"2ГИС пікірі, Ғалымжан Көптілеу",
+  r2:"Кофесі керемет! Барista қызы өте сыпайы😍 Барлығына кеңес беремін!!", r2w:"2ГИС пікірі, Miras Koptleuov",
+  r3:"Жақында студияңызда болдым және толық ризамын! Атмосферасы өте жайлы, бәрі жан дүниемен жасалған.", r3w:"2ГИС пікірі, elya beketova",
+  c_h:"Кофеге келесіз бе?", c_p:"WhatsApp-қа жазыңыз — бос орындар мен мастер-класс кестесін айтамыз.",
+  c_btn:"WhatsApp-қа жазу", f_about:"Есіл ауданындағы кофейня және шығармашылық студия, Астана.",
+  f_sect:"Бөлімдер", f_map:"Картада", f_all:"Толық мекенжай", f_city:"Астана",
+  note_label:"Ескерту:", note1:"толық мәзір мен изостудия белсенділіктері 2ГИС парағынан алынды — жарияламас бұрын позициялар мен бағаларды нақтылаңыз.",
+  note2:"пікірлер 2ГИС-тегі 35 пікірдің ішінен алынды — толық тізімді және орташа рейтингті парақтан тексеріп алыңыз."
+ },
+ ru:{
+  lm_city:"АСТАНА", nav_services:"Меню", nav_loc:"Адрес", nav_rev:"Отзывы", nav_con:"Контакты",
+  st_open:"Сейчас открыто", st_shut:"Закрыто · откроемся в 10:00",
+  hero_h1_a:"Кофе, десерты и своя ", hero_h1_b:"изостудия", hero_h1_c:" — в одном дворе",
+  hero_lead:"Уютная кофейня на ул. Сыганак, 52/2: авторский кофе, свежие круассаны и студия рисования по соседству. Работаем каждый день с 10:00 до 21:00.",
+  btn_order:"Написать в WhatsApp", btn_call:"Позвонить",
+  t1_lbl:"отзывов на 2ГИС", t2_num:"10:00–21:00", t2_lbl:"ежедневно", t3_num:"5 мин", t3_lbl:"от остановки «Сыганак»",
+  chip1:"Своя изостудия", chip2:"Кофе с собой",
+  s1b:"Свежая выпечка", s1:"Круассаны и донаты каждый день",
+  s2b:"Изостудия рядом", s2:"Рисование для детей и взрослых",
+  s3b:"Удобно поработать", s3:"Можно с ноутбуком, есть Wi-Fi",
+  s4b:"Любая оплата", s4:"Карта, наличные, перевод, QR-код",
+  serv_h:"От эспрессо до мастер-класса.",
+  serv_lead:"Меню и активности — по данным нашей страницы на 2ГИС.",
+  cat1:"Напитки", cat2:"Выпечка и десерты", cat3:"Изостудия и мастер-классы", cat4:"Пространство",
+  i1:"Кофе с собой", i2:"Чай с собой", i3:"Смузи", i4:"Молочные коктейли", i5:"Горячий шоколад", i6:"Какао", i7:"Лимонад",
+  i8:"Круассаны", i9:"Донаты", i10:"Выпечка к кофе",
+  i11:"Рисование для детей", i12:"Рисование для взрослых", i13:"Мастер-классы", i14:"Творческие встречи",
+  i15:"Wi-Fi", i16:"Место с ноутбуком", i17:"До 10 мест", i18:"Доступная среда (пандус)",
+  loc_h:"Нас можно найти на Сыганак, 52/2.", loc_lead:"Есильский район, 5 минут пешком от остановки «Сыганак».",
+  a_dir:"Маршрут", a_call:"Позвонить",
+  info_h:"Полезно знать",
+  info_check:"Средний чек", info_check_val:"~2000 ₸",
+  info_pay:"Оплата", info_pay_val:"Карта, наличные, перевод, QR-код",
+  info_access:"Доступная среда", info_access_val:"Пандус, доступный вход",
+  info_seats:"Места", info_seats_val:"До 10 мест, можно с ноутбуком",
+  rev_h:"Что говорят гости.",
+  r1:"Классная атмосфера😍 Там дальше еще изостудия. Спасибо девушке баристе за прекрасный капучино 👍 круассаны очень вкусные", r1w:"Отзыв на 2ГИС, Ғалымжан Көптілеу",
+  r2:"Кофе просто обалденная! Девушка бариста очень вежливая😍 Всем советую!!", r2w:"Отзыв на 2ГИС, Miras Koptleuov",
+  r3:"Недавно побывала в вашей студии и осталась в полном восторге! Очень уютная атмосфера, всё сделано с душой.", r3w:"Отзыв на 2ГИС, elya beketova",
+  c_h:"Заглянете на кофе?", c_p:"Напишите в WhatsApp — подскажем свободные места и расписание мастер-классов.",
+  c_btn:"Написать в WhatsApp", f_about:"Кофейня и творческая студия в Есильском районе, Астана.",
+  f_sect:"Разделы", f_map:"Мы на карте", f_all:"Все контакты", f_city:"Астана",
+  note_label:"Заметка:", note1:"полный список меню и активностей изостудии взят со страницы на 2ГИС — уточните позиции и цены перед публикацией.",
+  note2:"отзывы приведены из 35 отзывов на 2ГИС — стоит сверить полный список и средний рейтинг на самой странице."
+ },
+ en:{
+  lm_city:"ASTANA", nav_services:"Menu", nav_loc:"Location", nav_rev:"Reviews", nav_con:"Contact",
+  st_open:"Open now", st_shut:"Closed · opens at 10:00",
+  hero_h1_a:"Coffee, desserts and our own ", hero_h1_b:"art studio", hero_h1_c:" — in one courtyard",
+  hero_lead:"A cozy coffee shop at Syganak St. 52/2: specialty coffee, fresh croissants, and a painting studio next door. Open every day from 10:00 to 21:00.",
+  btn_order:"Message on WhatsApp", btn_call:"Call",
+  t1_lbl:"reviews on 2GIS", t2_num:"10:00–21:00", t2_lbl:"every day", t3_num:"5 min", t3_lbl:"from Syganak stop",
+  chip1:"Our own art studio", chip2:"Coffee to go",
+  s1b:"Fresh pastries", s1:"Croissants and donuts every day",
+  s2b:"Art studio next door", s2:"Painting classes for kids and adults",
+  s3b:"Good for working", s3:"Bring a laptop, Wi-Fi available",
+  s4b:"Any payment", s4:"Card, cash, transfer, QR code",
+  serv_h:"From espresso to a painting class.",
+  serv_lead:"Menu and activities, pulled from our own 2GIS page.",
+  cat1:"Drinks", cat2:"Pastries & desserts", cat3:"Art studio & workshops", cat4:"The space",
+  i1:"Coffee to go", i2:"Tea to go", i3:"Smoothies", i4:"Milkshakes", i5:"Hot chocolate", i6:"Cocoa", i7:"Lemonade",
+  i8:"Croissants", i9:"Donuts", i10:"Pastries for your coffee",
+  i11:"Painting for kids", i12:"Painting for adults", i13:"Workshops", i14:"Creative meetups",
+  i15:"Wi-Fi", i16:"Laptop-friendly seating", i17:"Up to 10 seats", i18:"Accessible entrance (ramp)",
+  loc_h:"Find us at Syganak St. 52/2.", loc_lead:"Yesil district, 5 minutes on foot from the Syganak stop.",
+  a_dir:"Directions", a_call:"Call",
+  info_h:"Good to know",
+  info_check:"Average bill", info_check_val:"~2000 ₸",
+  info_pay:"Payment", info_pay_val:"Card, cash, transfer, QR code",
+  info_access:"Accessibility", info_access_val:"Ramp, accessible entrance",
+  info_seats:"Seating", info_seats_val:"Up to 10 seats, laptop-friendly",
+  rev_h:"What guests say.",
+  r1:"Great atmosphere😍 There's an art studio further in too. Thanks to the barista for a wonderful cappuccino 👍 the croissants are very tasty", r1w:"2GIS review, Ғалымжан Көптілеу",
+  r2:"The coffee is amazing! The barista is very polite😍 Highly recommend to everyone!!", r2w:"2GIS review, Miras Koptleuov",
+  r3:"I recently visited your studio and was completely delighted! Very cozy atmosphere, everything made with heart.", r3w:"2GIS review, elya beketova",
+  c_h:"Stopping by for coffee?", c_p:"Message us on WhatsApp — we'll tell you about seating and the workshop schedule.",
+  c_btn:"Message on WhatsApp", f_about:"A coffee shop and creative studio in the Yesil district, Astana.",
+  f_sect:"Sections", f_map:"Find us", f_all:"All contacts", f_city:"Astana",
+  note_label:"Note:", note1:"the full menu and studio activities are taken from the business's own 2GIS page — please confirm items and prices before this goes live.",
+  note2:"reviews are pulled from 35 reviews on 2GIS — worth double-checking the full list and average rating on the page itself."
+ }
+};
+
+const CATS = [
+ {c:'cat1', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.1 10a3 3 0 0 1-3 2.7h-5.8a3 3 0 0 1-3-2.7L5 8z"/><path d="M18 9h1.6a2.6 2.6 0 0 1 0 5.2H18"/></svg>',
+  items:['i1','i2','i3','i4','i5','i6','i7']},
+ {c:'cat2', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 11a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>',
+  items:['i8','i9','i10']},
+ {c:'cat3', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-.5-1.5-.5-2.5A2.5 2.5 0 0 1 16 14h2a3 3 0 0 0 3-3c0-4.4-4-8-9-8z"/><circle cx="8" cy="11" r="1"/><circle cx="12" cy="8" r="1"/><circle cx="16" cy="11" r="1"/></svg>',
+  items:['i11','i12','i13','i14']},
+ {c:'cat4', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="5" width="16" height="10" rx="1.5"/><path d="M2 19h20"/></svg>',
+  items:['i15','i16','i17','i18']}
+];
+
+const WA_TEXT = {
+  kk:"Сәлеметсіз бе! Art&Coffee сайтынан жазып тұрмын:",
+  ru:"Здравствуйте! Пишу с сайта Art&Coffee:",
+  en:"Hello! Messaging from the Art&Coffee website:"
+};
+
+const MAP_LINK = 'https://2gis.kz/astana/geo/70000001067097756';
+
+let lang = 'ru';
+
+function astanaHour(){
+  const utcMs = Date.now() + new Date().getTimezoneOffset()*60000;
+  return new Date(utcMs + 5*3600000).getHours();
+}
+
+function render(){
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('#langs button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const v = t[el.dataset.t];
+    if(v!==undefined) el.textContent = v;
+  });
+
+  const h1 = document.getElementById('hero-h1');
+  if(h1) h1.innerHTML = `${t.hero_h1_a}<span class="hl">${t.hero_h1_b}</span>${t.hero_h1_c}`;
+
+  const hour = astanaHour();
+  const openNow = hour>=10 && hour<21;
+  document.getElementById('st-text').textContent = openNow ? t.st_open : t.st_shut;
+  document.getElementById('st-dot').classList.toggle('shut', !openNow);
+  document.getElementById('t1-num').textContent = '35+';
+
+  document.getElementById('sgrid').innerHTML = CATS.map(cat=>`
+    <div class="card">
+      <div class="chead"><span class="cico">${cat.icon}</span><h3>${t[cat.c]}</h3></div>
+      <ul>${cat.items.map(k=>`<li>${t[k]}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  document.getElementById('locs').innerHTML = `
+    <div class="loc">
+      <div class="loc-top">
+        <h3>Art&Coffee</h3>
+        <div class="addr">ул. Сыганак, 52/2, Есильский район, Астана</div>
+        <div class="loc-meta"><span class="chip2 star">${t.t2_num}</span><span class="chip2">${t.t3_num} · ${t.t3_lbl}</span></div>
+      </div>
+      <div class="loc-acts">
+        <a href="${MAP_LINK}" target="_blank" rel="noopener">${t.a_dir}</a>
+        <a href="tel:+77782236782">${t.a_call}</a>
+        <a class="w" href="https://wa.me/77471053329?text=${encodeURIComponent(WA_TEXT[lang])}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>
+    <div class="loc">
+      <div class="loc-top">
+        <h3>${t.info_h}</h3>
+        <ul class="info-list">
+          <li><b>${t.info_check}</b><span>${t.info_check_val}</span></li>
+          <li><b>${t.info_pay}</b><span>${t.info_pay_val}</span></li>
+          <li><b>${t.info_access}</b><span>${t.info_access_val}</span></li>
+          <li><b>${t.info_seats}</b><span>${t.info_seats_val}</span></li>
+        </ul>
+      </div>
+    </div>`;
+
+  document.getElementById('revs').innerHTML = [
+    [t.r1,t.r1w],[t.r2,t.r2w],[t.r3,t.r3w]
+  ].map(([q,w])=>`
+    <div class="rev"><div class="stars">★★★★★</div><p>${q}</p><div class="who">${w}</div></div>`).join('');
+
+  const link = 'https://wa.me/77471053329?text=' + encodeURIComponent(WA_TEXT[lang]);
+  ['wa-top','wa-hero','wa-cta','wa-fab'].forEach(id=>document.getElementById(id).href = link);
+}
+
+document.getElementById('langs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  lang = b.dataset.lang; render();
+});
+
+const burger = document.getElementById('burger'), drawer = document.getElementById('drawer');
+burger.addEventListener('click', ()=>{
+  const open = drawer.classList.toggle('open');
+  burger.setAttribute('aria-expanded', open);
+});
+drawer.addEventListener('click', e=>{
+  if(e.target.tagName==='A'){ drawer.classList.remove('open'); burger.setAttribute('aria-expanded','false'); }
+});
+
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const io = new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  }),{threshold:.12});
+  document.querySelectorAll('.rise').forEach(el=>io.observe(el));
+}else{
+  document.querySelectorAll('.rise').forEach(el=>el.classList.add('in'));
+}
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
