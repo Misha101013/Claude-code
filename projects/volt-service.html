@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Volt service+ — ремонт техники в Астане</title>
+<meta name="description" content="Volt service+ — ремонт бытовой техники и электроники в Астане. Выезд на дом, честная диагностика, оплата по QR.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='11' fill='%232E7FE0'/%3E%3Cpath d='M22 5 10 22h7l-2 13 14-19h-8z' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --white:#FFFFFF; --ice:#F0F7FC; --line:#DCE9F5; --ink:#0F1B2B; --grey:#5B6B7C;
+  --blue:#2E7FE0; --blue-deep:#155DAF; --blue-pale:#E4F1FC; --wa:#25D366;
+  --r:16px; --pad:clamp(18px,5vw,64px); --max:1200px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--white);color:var(--ink);font-family:'Inter',system-ui,sans-serif;
+  font-weight:400;line-height:1.55;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px}
+.inner{max-width:var(--max);margin:0 auto}
+h1,h2,h3{font-family:'Space Grotesk',sans-serif;font-weight:600;letter-spacing:-.02em;line-height:1.12;color:var(--ink)}
+h1{font-size:clamp(32px,5.4vw,58px);font-weight:700;line-height:1.05}
+h2{font-size:clamp(24px,3.6vw,40px)}
+h3{font-size:clamp(15px,1.7vw,19px)}
+.lead{font-size:clamp(15px,1.6vw,18px);color:var(--grey);font-weight:400}
+.mono{font-family:'JetBrains Mono',monospace}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--blue-deep);
+  background:var(--blue-pale);border:1px solid var(--line);padding:6px 13px;border-radius:100px;letter-spacing:.02em}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--blue);flex:none}
+.dot.shut{background:#C6553F}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;
+  border-radius:11px;font-size:15px;font-weight:600;border:1px solid transparent;cursor:pointer;
+  transition:.2s ease;white-space:nowrap;font-family:'Inter',sans-serif}
+.btn-wa{background:var(--wa);color:#fff}
+.btn-wa:hover{background:#1EBE5A;transform:translateY(-1px)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:var(--blue-deep);transform:translateY(-1px)}
+.btn-out{border-color:var(--line);color:var(--ink);background:#fff}
+.btn-out:hover{border-color:var(--blue)}
+.btn svg{width:18px;height:18px;flex:none}
+
+/* logo */
+.logo{display:flex;align-items:center;gap:10px;margin-right:auto;flex:none}
+.mark{width:36px;height:36px;flex:none;border-radius:11px;background:var(--blue);
+  display:grid;place-items:center;box-shadow:0 4px 14px rgba(46,127,224,.35)}
+.mark svg{width:19px;height:19px}
+.wordmark{display:flex;flex-direction:column;line-height:1}
+.wordmark .a{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.02em}
+.wordmark .a em{color:var(--blue);font-style:normal}
+.wordmark .b{font-size:8.5px;font-weight:600;letter-spacing:.28em;color:var(--grey);margin-top:3px}
+
+/* header */
+header{position:sticky;top:0;z-index:60;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.bar{max-width:var(--max);margin:0 auto;padding:11px var(--pad);display:flex;align-items:center;gap:16px}
+.menu-links{display:flex;gap:22px;font-size:14px;color:var(--grey);font-weight:500}
+.menu-links a{position:relative;padding:2px 0}
+.menu-links a::after{content:'';position:absolute;left:0;right:100%;bottom:-2px;height:1.5px;background:var(--blue);transition:right .25s ease}
+.menu-links a:hover{color:var(--ink)}
+.menu-links a:hover::after{right:0}
+.tel{font-weight:700;font-size:15px;letter-spacing:-.01em;font-family:'JetBrains Mono',monospace}
+.switches{display:flex;align-items:center;gap:8px}
+.langs{display:flex;background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:3px}
+.langs button{border:0;background:transparent;color:var(--grey);cursor:pointer;font-family:inherit;
+  font-size:12px;font-weight:700;padding:6px 10px;border-radius:100px;transition:.18s;text-transform:uppercase}
+.langs button:hover{color:var(--ink)}
+.langs button.on{background:#fff;color:var(--blue-deep);box-shadow:0 1px 3px rgba(15,27,43,.08)}
+#burger{display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--ice);
+  cursor:pointer;place-items:center;flex:none}
+#burger svg{width:17px;height:17px}
+.drawer{display:none;border-top:1px solid var(--line);background:#fff;padding:8px var(--pad) 16px}
+.drawer.open{display:block}
+.drawer a{display:block;padding:12px 0;font-size:16px;border-bottom:1px solid var(--line)}
+.drawer .tel-m{font-weight:700;font-family:'JetBrains Mono',monospace;border:0}
+
+@media(max-width:1080px){.menu-links{display:none}}
+@media(max-width:860px){#burger{display:grid}}
+@media(max-width:760px){.tel{display:none}}
+@media(max-width:560px){
+  .bar{gap:8px;padding-left:16px;padding-right:16px}
+  .bar .btn-wa{padding:10px 13px}
+  .bar .btn-wa .lbl{display:none}
+  .wordmark .b{display:none}
+  .langs button{padding:6px 8px;font-size:11px}
+}
+
+/* hero */
+.hero{padding:clamp(30px,5vw,60px) var(--pad) clamp(38px,6vw,70px);position:relative;overflow:hidden}
+.hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:clamp(24px,4vw,56px);align-items:center;position:relative}
+.hero h1{margin:16px 0 18px}
+.hero .lead{max-width:46ch}
+.hero h1 .hl{color:var(--blue)}
+.cta{display:flex;flex-wrap:wrap;gap:11px;margin-top:26px}
+.trust{display:flex;flex-wrap:wrap;gap:clamp(18px,3vw,42px);margin-top:32px;padding-top:26px;border-top:1px solid var(--line)}
+.trust div span{display:block;font-family:'Space Grotesk',sans-serif;font-size:23px;font-weight:700;letter-spacing:-.02em}
+.trust div small{font-size:12.5px;color:var(--grey)}
+
+.hero-art{position:relative;width:min(420px,100%);aspect-ratio:1/1;margin:0 auto}
+.hero-art .ring{position:absolute;inset:0;border-radius:50%;background:var(--blue-pale)}
+.hero-art .ring2{position:absolute;inset:12%;border-radius:50%;background:#fff;border:1px solid var(--line);
+  display:grid;place-items:center;box-shadow:0 20px 50px rgba(21,93,175,.14)}
+.hero-art .bolt{width:34%;color:var(--blue)}
+.pulse-wrap{position:absolute;left:-6%;right:-6%;top:50%;transform:translateY(-50%);height:70px;pointer-events:none}
+.pulse-line{width:100%;height:100%}
+.pulse-path{fill:none;stroke:var(--blue);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:640;stroke-dashoffset:640;animation:draw 3.2s ease-in-out infinite}
+@keyframes draw{
+  0%{stroke-dashoffset:640}
+  55%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:-640}
+}
+.hero-art .chip{position:absolute;background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:9px 13px;font-size:12.5px;font-weight:600;box-shadow:0 10px 24px rgba(15,27,43,.08);
+  display:flex;align-items:center;gap:7px}
+.hero-art .chip svg{width:15px;height:15px;color:var(--blue);flex:none}
+.hero-art .chip.c1{top:6%;right:2%}
+.hero-art .chip.c2{bottom:8%;left:0}
+@media(max-width:860px){
+  .hero-grid{grid-template-columns:1fr}
+  .hero-art{order:-1;width:200px;height:200px;aspect-ratio:auto;margin:0 auto 12px}
+  .hero-art .chip{display:none}
+}
+
+/* strip */
+.strip{background:var(--ice);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.strip-in{max-width:var(--max);margin:0 auto;padding:20px var(--pad);display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:18px}
+.si{display:flex;gap:12px;align-items:flex-start}
+.si b{display:block;font-size:14.5px;font-weight:700}
+.si p{font-size:13px;color:var(--grey);line-height:1.45}
+.ic{width:34px;height:34px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--blue)}
+.ic svg{width:17px;height:17px}
+
+section{padding:clamp(46px,6.5vw,88px) var(--pad)}
+.head{max-width:56ch;margin-bottom:clamp(26px,4vw,44px)}
+.head h2{margin:12px 0 12px}
+
+/* services */
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:16px}
+.card{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:#fff;transition:.22s ease}
+.card:hover{box-shadow:0 10px 28px rgba(15,27,43,.07);transform:translateY(-2px);border-color:#C9E1F7}
+.card .chead{display:flex;align-items:center;gap:11px;margin-bottom:14px}
+.card .cico{width:38px;height:38px;border-radius:10px;background:var(--blue-pale);color:var(--blue-deep);display:grid;place-items:center;flex:none}
+.card .cico svg{width:19px;height:19px}
+.card ul{list-style:none;display:flex;flex-wrap:wrap;gap:7px}
+.card li{font-size:13px;color:var(--grey);background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:5px 11px}
+
+/* locations */
+.lgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.loc{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#fff;display:flex;flex-direction:column;transition:.22s ease}
+.loc:hover{box-shadow:0 10px 28px rgba(15,27,43,.07)}
+.loc-top{padding:clamp(18px,2.4vw,24px);flex:1}
+.loc-top h3{margin-bottom:6px}
+.loc-top .addr{font-size:14px;color:var(--grey)}
+.loc-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip2{font-size:12px;color:var(--grey);background:var(--ice);border:1px solid var(--line);border-radius:100px;padding:4px 11px}
+.chip2.star{color:var(--blue-deep);font-weight:600}
+.loc-acts{display:flex;border-top:1px solid var(--line)}
+.loc-acts a{flex:1;padding:13px 8px;text-align:center;font-size:13.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:6px;transition:.2s}
+.loc-acts a+a{border-left:1px solid var(--line)}
+.loc-acts a:hover{background:var(--ice)}
+.loc-acts .w{color:#0F8C4B}
+.loc-acts svg{width:15px;height:15px;flex:none}
+
+/* reviews */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rev{border:1px solid var(--line);border-radius:var(--r);padding:clamp(18px,2.4vw,26px);background:var(--ice)}
+.stars{color:var(--blue-deep);font-size:13px;letter-spacing:2px;margin-bottom:12px}
+.rev p{font-size:15px;line-height:1.6}
+.rev .who{margin-top:14px;font-size:12.5px;color:var(--grey)}
+
+.contact{background:var(--ink);color:#fff;border-radius:clamp(20px,3vw,30px);padding:clamp(28px,5vw,58px);text-align:center;position:relative;overflow:hidden}
+.contact::after{content:'';position:absolute;width:340px;height:340px;right:-90px;top:-120px;border-radius:50%;
+  background:radial-gradient(circle,rgba(46,127,224,.55),transparent 68%)}
+.contact>*{position:relative}
+.contact h2{color:#fff;margin-bottom:12px}
+.contact p{opacity:.72;max-width:48ch;margin:0 auto 26px;font-weight:400}
+.contact .cta{justify-content:center}
+.contact .btn-out{background:transparent;border-color:rgba(255,255,255,.28);color:#fff}
+.contact .btn-out:hover{border-color:#fff}
+
+footer{border-top:1px solid var(--line);padding:clamp(34px,4.5vw,54px) var(--pad);background:var(--ice)}
+.fgrid{max-width:var(--max);margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:26px}
+.fgrid h4{font-size:13px;font-weight:700;margin-bottom:11px}
+.fgrid p,.fgrid a{font-size:13.5px;color:var(--grey);line-height:2}
+.fgrid a:hover{color:var(--ink)}
+.copy{max-width:var(--max);margin:28px auto 0;padding-top:20px;border-top:1px solid var(--line);font-size:12.5px;color:var(--grey);display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between}
+
+.fab{position:fixed;right:18px;bottom:18px;z-index:70;width:56px;height:56px;border-radius:50%;background:var(--wa);
+  display:grid;place-items:center;box-shadow:0 8px 24px rgba(37,211,102,.42);transition:transform .2s}
+.fab:hover{transform:scale(1.06)}
+.fab svg{width:28px;height:28px}
+
+.note{margin-top:20px;font-size:12.5px;color:var(--grey);border-left:2px solid var(--blue);padding-left:13px;max-width:66ch;line-height:1.6}
+.note b{color:var(--blue-deep);font-weight:700}
+
+.rise{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}
+.rise.in{opacity:1;transform:none}
+
+@media(prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+  html{scroll-behavior:auto}
+  .rise{opacity:1;transform:none}
+  .pulse-path{stroke-dashoffset:0;animation:none}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="bar">
+    <a class="logo" href="#top" aria-label="Volt service+">
+      <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1.5 8L20 8h-6z" fill="#fff"/></svg></span>
+      <span class="wordmark">
+        <span class="a">VOLT SERVICE<em>+</em></span>
+        <span class="b" data-t="lm_city">АСТАНА</span>
+      </span>
+    </a>
+
+    <nav class="menu-links">
+      <a href="#services" data-t="nav_services"></a>
+      <a href="#locations" data-t="nav_loc"></a>
+      <a href="#reviews" data-t="nav_rev"></a>
+      <a href="#contact" data-t="nav_con"></a>
+    </nav>
+
+    <a class="tel" href="tel:+77071119157">+7 707 111 9157</a>
+
+    <div class="switches">
+      <div class="langs" id="langs" role="group" aria-label="Language">
+        <button data-lang="kk">KK</button>
+        <button data-lang="ru">RU</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <button id="burger" aria-label="Menu" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </div>
+
+    <a class="btn btn-wa" id="wa-top" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+      <span class="lbl">WhatsApp</span>
+    </a>
+  </div>
+
+  <div class="drawer" id="drawer">
+    <a href="#services" data-t="nav_services"></a>
+    <a href="#locations" data-t="nav_loc"></a>
+    <a href="#reviews" data-t="nav_rev"></a>
+    <a href="#contact" data-t="nav_con"></a>
+    <a class="tel-m" href="tel:+77071119157">+7 707 111 9157</a>
+  </div>
+</header>
+
+<div class="hero" id="top">
+  <div class="hero-grid inner">
+    <div class="rise">
+      <span class="tag"><span class="dot" id="st-dot"></span> <span id="st-text"></span></span>
+      <h1 id="hero-h1"></h1>
+      <p class="lead" data-t="hero_lead"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-hero" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="btn_order"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77071119157"><span data-t="btn_call"></span> +7 707 111 9157</a>
+      </div>
+      <div class="trust">
+        <div><span>4.5★</span><small data-t="t_rate"></small></div>
+        <div><span>210+</span><small data-t="t_rev"></small></div>
+        <div><span data-t="t_visit_big"></span><small data-t="t_visit"></small></div>
+      </div>
+    </div>
+
+    <div class="hero-art rise">
+      <div class="ring"></div>
+      <div class="ring2">
+        <svg class="bolt" viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1.5 8L20 8h-6z" fill="currentColor"/></svg>
+      </div>
+      <div class="pulse-wrap">
+        <svg class="pulse-line" viewBox="0 0 400 70" preserveAspectRatio="none">
+          <path class="pulse-path" d="M0,35 L110,35 L130,10 L150,60 L170,35 L400,35"/>
+        </svg>
+      </div>
+      <div class="chip c1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12l4-8 4 8-4 8z"/><path d="M13 12l4-8 4 8-4 8z"/></svg><span data-t="chip1"></span></div>
+      <div class="chip c2"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2"/></svg><span data-t="chip2"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="strip">
+  <div class="strip-in">
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></div><div><b data-t="s1b"></b><p data-t="s1"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v9h14v-9"/></svg></div><div><b data-t="s2b"></b><p data-t="s2"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div><div><b data-t="s3b"></b><p data-t="s3"></p></div></div>
+    <div class="si"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h3"/></svg></div><div><b data-t="s4b"></b><p data-t="s4"></p></div></div>
+  </div>
+</div>
+
+<section id="services">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_services"></span>
+      <h2 data-t="serv_h"></h2>
+      <p class="lead" data-t="serv_lead"></p>
+    </div>
+    <div class="sgrid" id="sgrid"></div>
+    <p class="note"><b>Build note:</b> service list pulled from the business's own 2GIS category tags — worth a quick check that nothing's missing.</p>
+  </div>
+</section>
+
+<section id="locations" style="background:var(--ice);border-top:1px solid var(--line);border-bottom:1px solid var(--line)">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_loc"></span>
+      <h2 data-t="loc_h"></h2>
+      <p class="lead" data-t="loc_lead"></p>
+    </div>
+    <div class="lgrid" id="locs"></div>
+    <p class="note"><b>Build note:</b> the second address (Ыкылас Дукенулы, 28) showed up as a related listing under the same name — please confirm it's actually your second branch before this goes live. Weekly hours are also unconfirmed beyond "opens at 11:00" — worth locking down per day.</p>
+  </div>
+</section>
+
+<section id="reviews">
+  <div class="inner">
+    <div class="head rise">
+      <span class="tag" data-t="nav_rev"></span>
+      <h2 data-t="rev_h"></h2>
+    </div>
+    <div class="rgrid" id="revs"></div>
+    <p class="note"><b>Build note:</b> paraphrased from public 2ГИС reviews. There are also several serious negative reviews on your 2ГИС page (safety complaints, billing disputes, delays) — worth a look, separately from this site.</p>
+  </div>
+</section>
+
+<section>
+  <div class="inner">
+    <div class="contact rise" id="contact">
+      <h2 data-t="c_h"></h2>
+      <p data-t="c_p"></p>
+      <div class="cta">
+        <a class="btn btn-wa" id="wa-cta" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+          <span data-t="c_btn"></span>
+        </a>
+        <a class="btn btn-out" href="tel:+77071119157">+7 707 111 9157</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="fgrid">
+    <div>
+      <a class="logo" href="#top" style="margin-bottom:12px" aria-label="Volt service+">
+        <span class="mark"><svg viewBox="0 0 24 24" fill="none"><path d="M13 2 4 14h6l-1.5 8L20 8h-6z" fill="#fff"/></svg></span>
+        <span class="wordmark"><span class="a">VOLT SERVICE<em>+</em></span><span class="b" data-t="lm_city"></span></span>
+      </a>
+      <p><span data-t="f_about"></span></p>
+    </div>
+    <div>
+      <h4 data-t="nav_con"></h4>
+      <a href="tel:+77071119157">+7 707 111 9157</a><br>
+      <a href="https://wa.me/77071119157" target="_blank" rel="noopener">WhatsApp</a><br>
+      <a href="https://instagram.com/volt_servise_plus_astana" target="_blank" rel="noopener">Instagram</a>
+    </div>
+    <div>
+      <h4 data-t="f_sect"></h4>
+      <a href="#services" data-t="nav_services"></a><br>
+      <a href="#locations" data-t="nav_loc"></a><br>
+      <a href="#reviews" data-t="nav_rev"></a>
+    </div>
+    <div>
+      <h4 data-t="f_map"></h4>
+      <a href="https://2gis.kz/astana/geo/70000001020909277" target="_blank" rel="noopener">2ГИС</a><br>
+      <a href="#locations" data-t="f_all"></a>
+    </div>
+  </div>
+  <div class="copy">
+    <span>© <span id="yr"></span> Volt service+, <span data-t="f_city"></span></span>
+    <span>Instagram / 2ГИС</span>
+  </div>
+</footer>
+
+<a class="fab" id="wa-fab" target="_blank" rel="noopener" aria-label="WhatsApp">
+  <svg viewBox="0 0 24 24" fill="#fff"><path d="M17.5 14.4c-.3-.2-1.7-.9-2-1-.3-.1-.5-.2-.7.2s-.8 1-.9 1.1c-.2.2-.3.2-.6.1a8 8 0 0 1-4-3.5c-.3-.5.3-.5.8-1.5.1-.2 0-.4 0-.5l-1-2.2c-.2-.6-.5-.5-.7-.5h-.6c-.2 0-.5.1-.8.4-.3.3-1 1-1 2.5s1.1 2.9 1.2 3.1c.2.2 2.2 3.4 5.4 4.7 2 .8 2.7.9 3.7.8.6-.1 1.7-.7 2-1.4.2-.7.2-1.3.2-1.4-.1-.2-.3-.3-.6-.4M12 2a10 10 0 0 0-8.6 15L2 22l5.2-1.4A10 10 0 1 0 12 2m0 18.2c-1.6 0-3.2-.4-4.6-1.3l-.3-.2-3.1.8.8-3-.2-.3A8.2 8.2 0 1 1 12 20.2"/></svg>
+</a>
+
+<script>
+const T = {
+ kk:{
+  lm_city:"АСТАНА", nav_services:"Қызметтер", nav_loc:"Мекенжайлар", nav_rev:"Пікірлер", nav_con:"Байланыс",
+  st_open:"Қазір ашық", st_shut:"Жабық · 11:00-де ашылады",
+  hero_h1_a:"Техниканы ", hero_h1_b:"жөндеу", hero_h1_c:" — Астана",
+  hero_lead:"Тұрмыстық техника, электроника, компьютерлер. Диагностика адал, шеберлер үйге келеді. Дәл не бұзылғанын айтыңыз — бағаны алдын ала айтамыз.",
+  btn_order:"WhatsApp-қа жазу", btn_call:"Қоңырау шалу",
+  t_rate:"2ГИС бағасы", t_rev:"пікір", t_visit_big:"Иә", t_visit:"үйге шығу бар",
+  chip1:"Диагностика адал", chip2:"Кепілдікпен",
+  s1b:"Жылдам жөндеу", s1:"Көбіне сол күні немесе келесі күні",
+  s2b:"Үйге шығу", s2:"Ауыр техниканы алып жүрмейсіз",
+  s3b:"Кепілдік", s3:"Жасалған жұмысқа кепілдік беріледі",
+  s4b:"Кез келген төлем", s4:"Карта, қолма-қол, QR-код",
+  serv_h:"Тұрмыстық техникадан компьютерге дейін.",
+  serv_lead:"2ГИС-тегі толық қызмет тізімі — нақты не бұзылғанын жазыңыз, бағаны айтамыз.",
+  cat1:"Тұрмыстық техника", cat2:"Электроника және дыбыс", cat3:"Компьютер және деректер", cat4:"Арнайы техника",
+  i1:"Кір жуғыш машина", i2:"Тоңазытқыш", i3:"Шаңсорғыш", i4:"Микротолқынды пеш", i5:"Блендер", i6:"Плита/варочная панель",
+  i7:"Ыдыс жуғыш машина", i8:"Үтік", i9:"Шәйнек", i10:"Электр ұстара", i11:"Шаш кептіргіш",
+  i12:"Теледидар", i13:"Автомагнитола", i14:"Күшейткіш / аудио", i15:"Смарт колонка", i16:"Науатель",
+  i17:"Ноутбук/компьютер", i18:"Деректерді қалпына келтіру", i19:"ИБП", i20:"Планшет",
+  i21:"Жүгіру жолағы", i22:"Кофемашина", i23:"Су жылытқыш", i24:"Гироскутер",
+  loc_h:"Екі мекенжай — Астана.", loc_lead:"Бағыт салу үшін басыңыз немесе WhatsApp-қа жазыңыз.",
+  a_dir:"Бағыт", a_call:"Қоңырау",
+  branch1_n:"Кабанбай батыр", branch1_a:"Кабанбай батыр даңғ., 40, цокольный қабат",
+  branch2_n:"Ыкылас Дукенулы", branch2_a:"Ыкылас Дукенулы к-сі, 28",
+  rev_h:"Клиенттер не дейді.",
+  r1:"Гироскутер мен наушник адаптерін жылдам жөндеп берді, шебер қолы алтын.", r1w:"2ГИС пікірі",
+  r2:"Жеке шеберге рахмет — үтік, шәйнек, теледидарды бірнеше рет жөндеді, әрқашан сапалы.", r2w:"2ГИС пікірі",
+  r3:"Басқа орталықтар істей алмаған жұмысты бір күнде жасады, бағасы да қолайлы.", r3w:"2ГИС пікірі",
+  c_h:"Не бұзылды?", c_p:"WhatsApp-қа техника түрі мен ақаусын жазыңыз — бағаны алдын ала айтамыз.",
+  c_btn:"WhatsApp-қа жазу", f_about:"Тұрмыстық техника және электроника шеберханасы, Астана.",
+  f_sect:"Бөлімдер", f_map:"Картада", f_all:"Барлық мекенжай", f_city:"Астана"
+ },
+ ru:{
+  lm_city:"АСТАНА", nav_services:"Услуги", nav_loc:"Адреса", nav_rev:"Отзывы", nav_con:"Контакты",
+  st_open:"Сейчас открыто", st_shut:"Закрыто · откроемся в 11:00",
+  hero_h1_a:"Ремонт техники ", hero_h1_b:"без беготни", hero_h1_c:" — Астана",
+  hero_lead:"Бытовая техника, электроника, компьютеры. Честная диагностика, мастер может приехать к вам. Опишите поломку — назовём цену заранее.",
+  btn_order:"Написать в WhatsApp", btn_call:"Позвонить",
+  t_rate:"рейтинг на 2ГИС", t_rev:"отзывов", t_visit_big:"Да", t_visit:"выезд на дом",
+  chip1:"Честная диагностика", chip2:"С гарантией",
+  s1b:"Быстрый ремонт", s1:"Часто в тот же или на следующий день",
+  s2b:"Выезд на дом", s2:"Не тащить тяжёлую технику самим",
+  s3b:"Гарантия", s3:"На выполненную работу даётся гарантия",
+  s4b:"Любая оплата", s4:"Карта, наличные, QR-код",
+  serv_h:"От бытовой техники до компьютеров.",
+  serv_lead:"Полный список услуг — с собственной страницы на 2ГИС. Опишите поломку — подскажем стоимость.",
+  cat1:"Бытовая техника", cat2:"Электроника и звук", cat3:"Компьютеры и данные", cat4:"Специальная техника",
+  i1:"Стиральные машины", i2:"Холодильники", i3:"Пылесосы", i4:"Микроволновки", i5:"Блендеры", i6:"Плиты, варочные панели",
+  i7:"Посудомоечные машины", i8:"Утюги", i9:"Чайники", i10:"Электробритвы", i11:"Фены / плойки",
+  i12:"Телевизоры", i13:"Автомагнитолы", i14:"Усилители / аудио", i15:"Смарт-колонки", i16:"Наушники",
+  i17:"Ноутбуки и компьютеры", i18:"Восстановление данных", i19:"ИБП", i20:"Планшеты",
+  i21:"Беговые дорожки", i22:"Кофемашины", i23:"Водонагреватели", i24:"Гироскутеры",
+  loc_h:"Два адреса в Астане.", loc_lead:"Нажмите для маршрута или напишите в WhatsApp прямо в эту точку.",
+  a_dir:"Маршрут", a_call:"Позвонить",
+  branch1_n:"Кабанбай батыра", branch1_a:"пр. Кабанбай батыра, 40, цокольный этаж",
+  branch2_n:"Ыкылас Дукенулы", branch2_a:"ул. Ыкылас Дукенулы, 28",
+  rev_h:"Что говорят клиенты.",
+  r1:"Быстро починили переходник для наушников и гироскутер — золотые руки у мастера.", r1w:"Отзыв на 2ГИС",
+  r2:"Обращаюсь не первый раз — утюг, чайник, телевизор чинили ответственно и качественно.", r2w:"Отзыв на 2ГИС",
+  r3:"Сделали за один день то, что не смогли в четырёх других центрах, и по адекватной цене.", r3w:"Отзыв на 2ГИС",
+  c_h:"Что сломалось?", c_p:"Напишите в WhatsApp тип техники и проблему — назовём стоимость заранее.",
+  c_btn:"Написать в WhatsApp", f_about:"Мастерская бытовой и электронной техники, Астана.",
+  f_sect:"Разделы", f_map:"Мы на карте", f_all:"Все адреса", f_city:"Астана"
+ },
+ en:{
+  lm_city:"ASTANA", nav_services:"Services", nav_loc:"Locations", nav_rev:"Reviews", nav_con:"Contact",
+  st_open:"Open now", st_shut:"Closed · opens at 11:00",
+  hero_h1_a:"Appliance repair, ", hero_h1_b:"no runaround", hero_h1_c:" — Astana",
+  hero_lead:"Home appliances, electronics, computers. Honest diagnostics, and a technician can come to you. Describe the fault — we'll quote the price up front.",
+  btn_order:"Message on WhatsApp", btn_call:"Call",
+  t_rate:"rating on 2GIS", t_rev:"reviews", t_visit_big:"Yes", t_visit:"we come to you",
+  chip1:"Honest diagnostics", chip2:"Work is guaranteed",
+  s1b:"Fast turnaround", s1:"Often same-day or next-day",
+  s2b:"House calls", s2:"No need to haul heavy appliances in",
+  s3b:"Guarantee", s3:"Completed repairs come with a guarantee",
+  s4b:"Any payment", s4:"Card, cash, or QR code",
+  serv_h:"From home appliances to computers.",
+  serv_lead:"Full service list, pulled from their own 2GIS page. Describe the fault and we'll quote a price.",
+  cat1:"Home appliances", cat2:"Electronics & audio", cat3:"Computers & data", cat4:"Specialty equipment",
+  i1:"Washing machines", i2:"Refrigerators", i3:"Vacuum cleaners", i4:"Microwaves", i5:"Blenders", i6:"Stoves, cooktops",
+  i7:"Dishwashers", i8:"Irons", i9:"Kettles", i10:"Electric shavers", i11:"Hair dryers / stylers",
+  i12:"TVs", i13:"Car stereos", i14:"Amplifiers / audio", i15:"Smart speakers", i16:"Headphones",
+  i17:"Laptops & computers", i18:"Data recovery", i19:"UPS units", i20:"Tablets",
+  i21:"Treadmills", i22:"Coffee machines", i23:"Water heaters", i24:"E-scooters",
+  loc_h:"Two locations in Astana.", loc_lead:"Tap for directions, or message that branch directly on WhatsApp.",
+  a_dir:"Directions", a_call:"Call",
+  branch1_n:"Kabanbai Batyr", branch1_a:"Kabanbai Batyr Ave 40, basement floor",
+  branch2_n:"Ykylas Dukenuly", branch2_a:"Ykylas Dukenuly St 28",
+  rev_h:"What customers say.",
+  r1:"Fixed a headphone adapter and an e-scooter fast — genuinely skilled technician.", r1w:"2GIS review",
+  r2:"Not my first time here — iron, kettle, TV, all handled responsibly and well.", r2w:"2GIS review",
+  r3:"Fixed in a day what four other repair shops couldn't, and at a fair price.", r3w:"2GIS review",
+  c_h:"What broke?", c_p:"Message us on WhatsApp with the device and the problem — we'll quote a price up front.",
+  c_btn:"Message on WhatsApp", f_about:"Home appliance & electronics repair workshop, Astana.",
+  f_sect:"Sections", f_map:"Find us", f_all:"All locations", f_city:"Astana"
+ }
+};
+
+const CATS = [
+ {c:'cat1', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="5"/><path d="M9 6h.01M12 6h.01"/></svg>',
+  items:['i1','i2','i3','i4','i5','i6','i7','i8','i9','i10','i11']},
+ {c:'cat2', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="10" rx="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/></svg>',
+  items:['i12','i13','i14','i15','i16']},
+ {c:'cat3', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M2 20h20M9 20l1-4h4l1 4"/></svg>',
+  items:['i17','i18','i19','i20']},
+ {c:'cat4', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  items:['i21','i22','i23','i24']}
+];
+
+const LOCS = [
+ {nKey:'branch1_n', aKey:'branch1_a', tel:'+77071119157', wa:'77071119157',
+  map:'https://2gis.kz/astana/geo/70000001020909277', rating:'4.5 ★'},
+ {nKey:'branch2_n', aKey:'branch2_a', tel:'+77071119157', wa:'77071119157',
+  map:'https://2gis.kz/astana/search/Volt%20service', rating:'4.6 ★'}
+];
+
+const WA_TEXT = {
+  kk:"Сәлеметсіз бе! Техникамды жөндегім келеді:",
+  ru:"Здравствуйте! Хочу отремонтировать технику:",
+  en:"Hello! I'd like to get something repaired:"
+};
+
+let lang = 'ru';
+
+function astanaHour(){
+  const utcMs = Date.now() + new Date().getTimezoneOffset()*60000;
+  return new Date(utcMs + 5*3600000).getHours();
+}
+
+function render(){
+  const t = T[lang];
+  document.documentElement.lang = lang;
+  document.querySelectorAll('#langs button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const v = t[el.dataset.t];
+    if(v!==undefined) el.textContent = v;
+  });
+
+  const h1 = document.getElementById('hero-h1');
+  if(h1) h1.innerHTML = `${t.hero_h1_a}<span class="hl">${t.hero_h1_b}</span>${t.hero_h1_c}`;
+
+  const openNow = astanaHour()>=11 && astanaHour()<20;
+  document.getElementById('st-text').textContent = openNow ? t.st_open : t.st_shut;
+  document.getElementById('st-dot').classList.toggle('shut', !openNow);
+
+  document.getElementById('sgrid').innerHTML = CATS.map(cat=>`
+    <div class="card">
+      <div class="chead"><span class="cico">${cat.icon}</span><h3>${t[cat.c]}</h3></div>
+      <ul>${cat.items.map(k=>`<li>${t[k]}</li>`).join('')}</ul>
+    </div>`).join('');
+
+  document.getElementById('locs').innerHTML = LOCS.map(l=>`
+    <div class="loc">
+      <div class="loc-top">
+        <h3>${t[l.nKey]}</h3>
+        <div class="addr">${t[l.aKey]}</div>
+        <div class="loc-meta"><span class="chip2 star">${l.rating}</span><span class="chip2">${t.t_visit}</span></div>
+      </div>
+      <div class="loc-acts">
+        <a href="${l.map}" target="_blank" rel="noopener">${t.a_dir}</a>
+        <a href="tel:${l.tel}">${t.a_call}</a>
+        <a class="w" href="https://wa.me/${l.wa}?text=${encodeURIComponent(WA_TEXT[lang])}" target="_blank" rel="noopener">WhatsApp</a>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('revs').innerHTML = [
+    [t.r1,t.r1w],[t.r2,t.r2w],[t.r3,t.r3w]
+  ].map(([q,w])=>`
+    <div class="rev"><div class="stars">★★★★★</div><p>${q}</p><div class="who">${w}</div></div>`).join('');
+
+  const link = 'https://wa.me/77071119157?text=' + encodeURIComponent(WA_TEXT[lang]);
+  ['wa-top','wa-hero','wa-cta','wa-fab'].forEach(id=>document.getElementById(id).href = link);
+}
+
+document.getElementById('langs').addEventListener('click', e=>{
+  const b = e.target.closest('button'); if(!b) return;
+  lang = b.dataset.lang; render();
+});
+
+const burger = document.getElementById('burger'), drawer = document.getElementById('drawer');
+burger.addEventListener('click', ()=>{
+  const open = drawer.classList.toggle('open');
+  burger.setAttribute('aria-expanded', open);
+});
+drawer.addEventListener('click', e=>{
+  if(e.target.tagName==='A'){ drawer.classList.remove('open'); burger.setAttribute('aria-expanded','false'); }
+});
+
+if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const io = new IntersectionObserver(es=>es.forEach(e=>{
+    if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+  }),{threshold:.12});
+  document.querySelectorAll('.rise').forEach(el=>io.observe(el));
+}else{
+  document.querySelectorAll('.rise').forEach(el=>el.classList.add('in'));
+}
+
+document.getElementById('yr').textContent = new Date().getFullYear();
+render();
+</script>
+</body>
+</html>
