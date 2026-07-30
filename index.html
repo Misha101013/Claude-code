@@ -93,28 +93,44 @@
 
   <!-- ============ HIDE (paint) ============ -->
   <section id="screen-hide" class="screen screen--full">
-    <div class="hide-topbar">
-      <div class="hide-timer" id="hide-timer">45</div>
-      <div class="hide-hint" id="hide-hint">Перетащи персонажа на фото</div>
-      <button id="btn-hide-done" class="btn btn--primary btn--sm" type="button" disabled>Готово</button>
-    </div>
-
-    <div class="canvas-wrap" id="canvas-wrap">
+    <div class="camera-wrap" id="canvas-wrap">
       <canvas id="canvas-photo"></canvas>
       <canvas id="canvas-paint"></canvas>
+
+      <div class="status-pill" id="hide-status-pill">
+        <span class="status-pill-icon">🎨</span>
+        <span class="status-pill-text" id="hide-hint">Спрячься</span>
+        <span class="status-pill-timer" id="hide-timer">45</span>
+      </div>
+
+      <button id="btn-place-here" class="place-pill" type="button" hidden>Сюда ✓</button>
     </div>
 
-    <div class="paint-toolbar" id="paint-toolbar" hidden>
-      <div class="brush-row" id="brush-row"></div>
-      <div class="tool-row">
-        <button class="tool-btn" id="tool-undo" type="button" title="Отменить">↺</button>
-        <input id="brush-size" class="brush-size" type="range" min="4" max="40" value="14" />
-        <button class="tool-btn tool-btn--eyedropper" id="tool-eyedropper" type="button" title="Пипетка">💧</button>
-        <label class="tool-btn tool-btn--colorwheel" title="Свой цвет">
-          🎨<input id="color-custom" type="color" value="#c98a5b" />
-        </label>
+    <div class="bottom-bar" id="paint-toolbar" hidden>
+      <div class="swatch-strip" id="palette-row"></div>
+      <div class="icon-strip-row">
+        <div class="icon-strip">
+          <button class="icon-btn" id="tool-undo" type="button" title="Отменить">↺</button>
+          <div class="brush-picker" id="brush-row"></div>
+          <input id="brush-size" class="brush-size" type="range" min="4" max="40" value="14" title="Размер кисти" />
+          <button class="icon-btn" id="tool-eyedropper" type="button" title="Пипетка">💧</button>
+          <button class="icon-btn icon-btn--wheel" id="tool-wheel" type="button" title="Цвет">
+            <span class="wheel-swatch" id="wheel-swatch"></span>
+          </button>
+        </div>
+        <button class="icon-btn icon-btn--done" id="btn-hide-done" type="button" title="Готово" disabled>✓</button>
       </div>
-      <div class="palette-row" id="palette-row"></div>
+
+      <div class="wheel-popover" id="wheel-popover" hidden>
+        <div class="wheel-area">
+          <canvas id="wheel-canvas"></canvas>
+          <div class="wheel-dot" id="wheel-dot"></div>
+        </div>
+        <div class="value-track" id="value-track">
+          <div class="value-thumb" id="value-thumb"></div>
+        </div>
+        <button class="btn btn--primary btn--sm" id="wheel-close" type="button">Готово</button>
+      </div>
     </div>
   </section>
 
@@ -129,16 +145,15 @@
 
   <!-- ============ SEEK ============ -->
   <section id="screen-seek" class="screen screen--full">
-    <div class="hide-topbar">
-      <div class="hide-timer" id="seek-timer">60</div>
-      <div class="hide-hint" id="seek-hint">Ищи спрятавшихся — тапай по фото</div>
-    </div>
-    <div class="canvas-wrap" id="seek-canvas-wrap">
+    <div class="camera-wrap" id="seek-canvas-wrap">
       <canvas id="canvas-seek"></canvas>
+      <div class="status-pill" id="seek-status-pill">
+        <span class="status-pill-icon">🔎</span>
+        <span class="status-pill-text" id="seek-hint">Ищи!</span>
+        <span class="status-pill-timer" id="seek-timer">60</span>
+      </div>
     </div>
-    <div class="seek-status-bar">
-      <div id="seek-found-count">Найдено: 0 / 0</div>
-    </div>
+    <div class="bottom-status-pill" id="seek-found-count">Найдено: 0 / 0</div>
   </section>
 
   <!-- ============ SPECTATE (non-seeker during seek phase) ============ -->

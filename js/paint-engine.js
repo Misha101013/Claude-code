@@ -10,6 +10,21 @@ const REF = 3;
 
 const BASE_FILL = '#d8d3c4';
 
+let _checkerPattern = null;
+function checkerPattern(ctx) {
+  if (_checkerPattern) return _checkerPattern;
+  const tile = document.createElement('canvas');
+  tile.width = tile.height = 16;
+  const tctx = tile.getContext('2d');
+  tctx.fillStyle = 'rgba(255,255,255,0.55)';
+  tctx.fillRect(0, 0, 16, 16);
+  tctx.fillStyle = 'rgba(120,120,130,0.55)';
+  tctx.fillRect(0, 0, 8, 8);
+  tctx.fillRect(8, 8, 8, 8);
+  _checkerPattern = ctx.createPattern(tile, 'repeat');
+  return _checkerPattern;
+}
+
 export const BRUSHES = [
   { id: 'soft', label: '●', title: 'Мягкая кисть' },
   { id: 'hard', label: '⬤', title: 'Жёсткая кисть' },
@@ -118,6 +133,7 @@ export class PaintEngine {
 
   lockPlacement() {
     this.phase = 'painting';
+    this._redrawSprite();
   }
 
   get k() {
@@ -136,12 +152,32 @@ export class PaintEngine {
 
   _redrawSprite() {
     if (!this.canvasW) return;
-    this.paintCtx.setTransform(1, 0, 0, 1, 0, 0);
-    this.paintCtx.clearRect(0, 0, this.canvasW, this.canvasH);
+    const ctx = this.paintCtx;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.canvasW, this.canvasH);
     const r = this.spriteScreenRect();
-    this.paintCtx.globalAlpha = this.phase === 'placing' ? 0.85 : 1;
-    this.paintCtx.drawImage(this.offscreen, r.x, r.y, r.w, r.h);
-    this.paintCtx.globalAlpha = 1;
+
+    if (this.phase === 'placing') {
+      // Not-yet-placed preview: transparency checkerboard + dashed
+      // outline, like a "sticker not stuck down yet" indicator.
+      const k = this.k;
+      const path = new Path2D();
+      path.addPath(this.charPath, new DOMMatrix().translate(r.x, r.y).scale(k, k));
+      ctx.save();
+      ctx.clip(path);
+      ctx.fillStyle = checkerPattern(ctx);
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.restore();
+      ctx.save();
+      ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([7, 5]);
+      ctx.stroke(path);
+      ctx.restore();
+      return;
+    }
+
+    ctx.drawImage(this.offscreen, r.x, r.y, r.w, r.h);
   }
 
   // ---- coordinate mapping: screen canvas px -> box space (0..100, 0..140) ----

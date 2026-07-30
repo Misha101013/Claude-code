@@ -3,6 +3,7 @@ import { PaintEngine, BRUSHES, drawSpriteOnCanvas, isPointInCharacter, spriteRec
 import { buildCharacterPath } from './shapes.js';
 import { PALETTE, AVATAR_COLORS } from './palette-data.js';
 import { DEMO_SCENES, paintDemoScene, demoSceneDataUrl } from './demo-scenes.js';
+import { IbisColorWheel } from './color-wheel.js';
 
 const $ = (id) => document.getElementById(id);
 const game = new Game();
@@ -205,6 +206,8 @@ $('btn-start-round').addEventListener('click', () => {
 
 // ---------------- hide (paint) screen ----------------
 
+let colorWheel = null;
+
 function ensureEngine() {
   if (!engine) {
     engine = new PaintEngine({
@@ -213,12 +216,18 @@ function ensureEngine() {
       paintCanvas: $('canvas-paint'),
     });
     engine.onColorPicked = (hex) => {
-      $('color-custom').value = hex;
       $('tool-eyedropper').classList.remove('is-selected');
-      highlightPaletteSwatch(hex);
+      setActiveColor(hex);
     };
   }
   return engine;
+}
+
+function setActiveColor(hex) {
+  engine.setColor(hex);
+  $('wheel-swatch').style.background = hex;
+  highlightPaletteSwatch(hex);
+  if (colorWheel) colorWheel.setColor(hex);
 }
 
 function renderBrushRow() {
@@ -248,11 +257,7 @@ function renderPaletteRow() {
     sw.className = 'swatch';
     sw.style.background = hex;
     sw.dataset.hex = hex;
-    sw.addEventListener('click', () => {
-      engine.setColor(hex);
-      $('color-custom').value = hex;
-      highlightPaletteSwatch(hex);
-    });
+    sw.addEventListener('click', () => setActiveColor(hex));
     row.appendChild(sw);
   }
 }
@@ -267,21 +272,44 @@ renderBrushRow();
 renderPaletteRow();
 
 $('brush-size').addEventListener('input', (e) => engine && engine.setSize(parseInt(e.target.value, 10)));
-$('color-custom').addEventListener('input', (e) => { engine.setColor(e.target.value); highlightPaletteSwatch(e.target.value); });
 $('tool-undo').addEventListener('click', () => engine && engine.undo());
 $('tool-eyedropper').addEventListener('click', () => {
   if (!engine) return;
   engine.eyedropperActive = !engine.eyedropperActive;
   $('tool-eyedropper').classList.toggle('is-selected', engine.eyedropperActive);
+  $('wheel-popover').hidden = true;
 });
+
+function ensureColorWheel() {
+  if (!colorWheel) {
+    colorWheel = new IbisColorWheel({
+      wheelCanvas: $('wheel-canvas'),
+      valueTrack: $('value-track'),
+      valueThumb: $('value-thumb'),
+      wheelDot: $('wheel-dot'),
+      size: 170,
+      onChange: (hex) => setActiveColor(hex),
+    });
+  }
+  return colorWheel;
+}
+
+$('tool-wheel').addEventListener('click', () => {
+  ensureColorWheel();
+  $('wheel-popover').hidden = !$('wheel-popover').hidden;
+  $('tool-eyedropper').classList.remove('is-selected');
+  if (engine) engine.eyedropperActive = false;
+});
+$('wheel-close').addEventListener('click', () => { $('wheel-popover').hidden = true; });
 
 async function beginHidePhase(photoUrl, hideSeconds) {
   showScreen('screen-hide');
   hideSubmitted = false;
   $('paint-toolbar').hidden = true;
-  $('btn-hide-done').disabled = false;
-  $('btn-hide-done').textContent = 'Сюда ✓';
-  $('hide-hint').textContent = 'Перетащи персонажа в укромное место на фото';
+  $('wheel-popover').hidden = true;
+  $('btn-place-here').hidden = false;
+  $('btn-hide-done').disabled = true;
+  $('hide-hint').textContent = 'Спрячься';
   const eng = ensureEngine();
   await eng.loadPhoto(photoUrl);
   eng.eyedropperActive = false;
@@ -300,16 +328,18 @@ async function beginHidePhase(photoUrl, hideSeconds) {
   }, 250);
 }
 
+$('btn-place-here').addEventListener('click', () => {
+  if (!engine || engine.phase !== 'placing') return;
+  engine.lockPlacement();
+  $('btn-place-here').hidden = true;
+  $('paint-toolbar').hidden = false;
+  $('btn-hide-done').disabled = false;
+  $('hide-hint').textContent = 'Закрасься';
+});
+
 $('btn-hide-done').addEventListener('click', () => {
-  if (!engine) return;
-  if (engine.phase === 'placing') {
-    engine.lockPlacement();
-    $('paint-toolbar').hidden = false;
-    $('hide-hint').textContent = 'Закрась персонажа в цвета фона (👇 пипетка возьмёт цвет с фото)';
-    $('btn-hide-done').textContent = 'Готово';
-  } else {
-    submitHide();
-  }
+  if (!engine || engine.phase !== 'painting') return;
+  submitHide();
 });
 
 function submitHide() {
