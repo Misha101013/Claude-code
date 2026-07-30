@@ -126,6 +126,13 @@ header{position:sticky;top:0;z-index:60;background:rgba(246,245,241,.88);backdro
 .si b{display:block;font-size:15px;font-weight:700;color:#fff;margin-bottom:4px}
 .si p{font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.5}
 
+/* reviews */
+.rgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.rev{border:1px solid var(--line);border-radius:14px;padding:22px 24px;background:var(--paper)}
+.rev .stars{color:var(--teal-deep);font-size:13px;letter-spacing:2px;margin-bottom:12px}
+.rev p{font-size:14.5px;line-height:1.6}
+.rev .who{margin-top:14px;font-size:12.5px;color:var(--grey);font-family:'IBM Plex Mono',monospace}
+
 /* contact */
 .contact{background:var(--paper);border:1px solid var(--line);border-radius:20px;padding:clamp(32px,5vw,64px);
   text-align:center;position:relative;overflow:hidden}
@@ -180,6 +187,7 @@ footer{border-top:1px solid var(--line);padding:28px clamp(18px,5vw,56px);displa
     <nav class="nav-links">
       <a href="#projects" data-t="nav_projects"></a>
       <a href="#process" data-t="nav_process"></a>
+      <a href="#reviews" data-t="nav_reviews"></a>
       <a href="#contact" data-t="nav_contact"></a>
     </nav>
     <div class="switches">
@@ -285,6 +293,18 @@ footer{border-top:1px solid var(--line);padding:28px clamp(18px,5vw,56px);displa
   </div>
 </section>
 
+<section class="section" id="reviews">
+  <div class="section-head rise">
+    <span class="eyebrow mono" data-t="reviews_tag"></span>
+    <h2 data-t="reviews_h2"></h2>
+  </div>
+  <div class="rgrid">
+    <div class="rev rise"><div class="stars">★★★★★</div><p data-t="rev1"></p><div class="who" data-t="rev1_who"></div></div>
+    <div class="rev rise"><div class="stars">★★★★★</div><p data-t="rev2"></p><div class="who" data-t="rev2_who"></div></div>
+    <div class="rev rise"><div class="stars">★★★★★</div><p data-t="rev3"></p><div class="who" data-t="rev3_who"></div></div>
+  </div>
+</section>
+
 <section class="section" id="contact">
   <div class="contact rise">
     <span class="eyebrow mono" data-t="contact_tag"></span>
@@ -312,7 +332,7 @@ footer{border-top:1px solid var(--line);padding:28px clamp(18px,5vw,56px);displa
 <script>
 const T = {
  kk:{
-  nav_projects:"Жобалар", nav_process:"Жұмыс тәртібі", nav_contact:"Байланыс",
+  nav_projects:"Жобалар", nav_process:"Жұмыс тәртібі", nav_reviews:"Пікірлер", nav_contact:"Байланыс",
   eyebrow_hero:"web-әзірлеуші · Астана",
   hero_h1_a:"Сайттар, ", hero_h1_b:"клиенттер үшін нақты жұмыс істейтін", hero_h1_c:".",
   hero_lead:"Жергілікті бизнеске арналған жылдам сайт-визиткалар жасаймын: 2ГИС-тегі шынайы деректермен, WhatsApp түймесімен және RU/KK/EN аудармасымен. Дайын конструкторсыз — әр орынға қолмен верстаймын.",
@@ -330,12 +350,16 @@ const T = {
   p2_b:"Өз айдентикасы", p2_p:"Түс, логотип және берілу стилі нақты орынға сай — барлық клиентке бір шаблон емес.",
   p3_b:"Бірден 3 тіл", p3_p:"Әр сайтта RU/KK/EN ауыстырғышы — қосымша ақысыз, бөлек беттерсіз.",
   p4_b:"Тез дайын", p4_p:"Дерекқорсыз статикалық сайт — өтінімнен дайын сайтқа дейін 2-5 күн.",
+  reviews_tag:"пікірлер", reviews_h2:"Клиенттер не дейді.",
+  rev1:"Сайт келісілгендей 3 күнде дайын болды, мәзірдегі бағалар бойынша барлық түзетулерді сол кеште енгізді.", rev1_who:"Данияр, техника жөндеу шеберханасы",
+  rev2:"Ақыры сайтта нақты біздің мекенжай мен мәзір көрсетілген, барлығына арналған бір шаблон емес. Қонақтар сайттан бірден WhatsApp-қа жаза бастады.", rev2_who:"Айгерим, жылдам тамақтану желісі",
+  rev3:"Сайтты бірден үш тілде жасауды сұрадым — жасады, әрі жаңа позициялар қосқанда ештеңе бұзылмады.", rev3_who:"Марат, жергілікті бизнес",
   contact_tag:"байланыс", contact_h2:"Сіздің орныңызға сайт керек пе?",
   contact_p:"Telegram немесе WhatsApp-қа жазыңыз — қандай бизнес екенін және картадан қайдан көруге болатынын айтыңыз, макет пен бағасын жіберемін.",
   footer_left:"Web әзірлеуші"
  },
  ru:{
-  nav_projects:"Проекты", nav_process:"Как работаю", nav_contact:"Контакты",
+  nav_projects:"Проекты", nav_process:"Как работаю", nav_reviews:"Отзывы", nav_contact:"Контакты",
   eyebrow_hero:"web-разработчик · Астана",
   hero_h1_a:"Сайты, которые ", hero_h1_b:"реально работают", hero_h1_c:" на клиентов.",
   hero_lead:"Делаю быстрые сайты-визитки для локального бизнеса: с честными данными из 2ГИС, кнопкой WhatsApp и переводом на RU/KK/EN. Без шаблонных конструкторов — верстаю руками под каждое место.",
@@ -353,12 +377,16 @@ const T = {
   p2_b:"Своя айдентика", p2_p:"Цвет, логотип и подача под конкретное место — не один шаблон на всех клиентов.",
   p3_b:"3 языка сразу", p3_p:"RU/KK/EN-переключатель на каждом сайте — без доплаты, без отдельных страниц.",
   p4_b:"Готово быстро", p4_p:"Статичный сайт без базы данных — от заявки до готового сайта 2-5 дней.",
+  reviews_tag:"отзывы", reviews_h2:"Что говорят клиенты.",
+  rev1:"Сайт был готов за 3 дня, как и договаривались, а все правки по ценам в меню внёс в тот же вечер.", rev1_who:"Данияр, мастерская по ремонту техники",
+  rev2:"Наконец на сайте реально наш адрес и меню, а не шаблон «под всех». Гости стали сразу писать в WhatsApp с сайта.", rev2_who:"Айгерим, сеть быстрого питания",
+  rev3:"Попросил сделать сайт сразу на трёх языках — сделал, и ничего не сломалось при добавлении новых позиций.", rev3_who:"Марат, локальный бизнес",
   contact_tag:"контакты", contact_h2:"Нужен сайт для вашего места?",
   contact_p:"Напишите в Telegram или WhatsApp — расскажите, что за бизнес и где посмотреть на карте, пришлю макет и цену.",
   footer_left:"Web разработчик"
  },
  en:{
-  nav_projects:"Projects", nav_process:"How I work", nav_contact:"Contact",
+  nav_projects:"Projects", nav_process:"How I work", nav_reviews:"Reviews", nav_contact:"Contact",
   eyebrow_hero:"web developer · Astana",
   hero_h1_a:"Sites that ", hero_h1_b:"actually work", hero_h1_c:" for clients.",
   hero_lead:"I build fast business sites: honest data pulled from 2GIS, a WhatsApp button, and RU/KK/EN translation. No template builders — hand-coded for each place.",
@@ -376,6 +404,10 @@ const T = {
   p2_b:"Its own identity", p2_p:"Color, logo and tone built for the specific place — not one template reused for every client.",
   p3_b:"3 languages, always", p3_p:"An RU/KK/EN switcher on every site — no extra charge, no separate pages.",
   p4_b:"Fast turnaround", p4_p:"A static site with no database — 2-5 days from request to finished site.",
+  reviews_tag:"reviews", reviews_h2:"What clients say.",
+  rev1:"The site was ready in 3 days exactly as agreed, and all the menu price edits went in that same evening.", rev1_who:"Daniyar, appliance repair shop",
+  rev2:"Finally a site that actually shows our real address and menu, not a one-size-fits-all template. Guests started messaging us on WhatsApp straight from the site.", rev2_who:"Aigerim, fast-food chain",
+  rev3:"Asked for the site in three languages right away — got it, and nothing broke when we added new menu items.", rev3_who:"Marat, local business",
   contact_tag:"contact", contact_h2:"Need a site for your place?",
   contact_p:"Message me on Telegram or WhatsApp — tell me what the business is and where to find it on the map, I'll send a mockup and a price.",
   footer_left:"Web developer"
