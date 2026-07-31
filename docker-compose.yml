@@ -1,0 +1,13 @@
+services:
+  parser:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./data:/app/data
+      # Правила можно править на хосте и применять командой /reload
+      - ./config.yaml:/app/config.yaml:ro
+    # Первый запуск требует ввода кода из Telegram:
+    #   docker compose run --rm parser python -m app
+    stdin_open: true
+    tty: true

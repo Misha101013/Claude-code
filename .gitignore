@@ -1,0 +1,23 @@
+# секреты и рабочие данные — никогда не коммитим
+.env
+config.yaml
+data/
+*.session
+*.session-journal
+*.db
+*.db-journal
+*.csv
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+*.egg-info/
+
+# редакторы / ОС
+.idea/
+.vscode/
+.DS_Store
