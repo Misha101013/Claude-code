@@ -157,14 +157,21 @@ export class Game {
         photoUrl: this.round.photoUrl,
         settings: this.settings,
         seekerId: this.round.seekerId,
+        mode: this.round.mode,
         roundIndex: this.round.roundIndex,
         totalRounds: this.round.totalRounds,
         startedAt: this.round.startedAt,
       });
     } else if (this.phase === 'seek' && this.round) {
+      // Double mode's list is personalised per player (everyone but
+      // yourself) — reconnecting must not hand you back your own sprite.
+      const sprites = this.round.mode === 'double'
+        ? (this.round.spriteList || []).filter((s) => s.playerId !== playerId)
+        : this.round.spriteList;
       this.net.sendTo(playerId, 'seek-start', {
-        sprites: this.round.spriteList,
+        sprites,
         seekerId: this.round.seekerId,
+        mode: this.round.mode,
         seekSeconds: this.settings.seekSeconds,
         tapsAllowed: this.round.tapsAllowed,
         startedAt: this.round.seekStartedAt,
@@ -232,7 +239,10 @@ export class Game {
 
   // ---------------- round: hide phase ----------------
 
-  hostStartRound(photoDataUrl) {
+  // mode: 'classic' (one seeker) | 'infection' (found hiders join the
+  // hunt) | 'double' (nobody's excluded — everyone hides, then everyone
+  // hunts everyone else).
+  hostStartRound(photoDataUrl, mode = 'classic') {
     if (!this.isHost) return;
     const ids = this._playersArray().map((p) => p.id);
     const minPlayers = playerSettings.testMode ? 1 : 2;
@@ -247,31 +257,35 @@ export class Game {
       for (const p of this.players.values()) p.totalScore = 0;
     }
 
-    let seekerId;
-    if (ids.length === 1) {
-      // Solo test round: nobody to rotate through. You hide by default —
-      // only pressing "I want to seek" flips you to the seeker instead,
-      // and then there's nobody left to hide from you.
-      const solo = this.players.get(ids[0]);
-      seekerId = solo && solo.wantsSeeker ? ids[0] : null;
-      if (solo) solo.wantsSeeker = false;
-    } else {
-      // Random rather than join order, but still fair: everyone still gets
-      // exactly one turn before anybody repeats (the pool reopens once it's
-      // empty). Anyone who's raised their hand for this round jumps the
-      // queue — picked at random if more than one volunteers — otherwise
-      // it's a random draw from whoever hasn't sought yet.
-      let pool = ids.filter((id) => !this.match.seekerHistory.includes(id));
-      if (pool.length === 0) { this.match.seekerHistory = []; pool = ids.slice(); }
-      const volunteers = pool.filter((id) => {
-        const p = this.players.get(id);
-        return p && p.wantsSeeker;
-      });
-      const chooseFrom = volunteers.length ? volunteers : pool;
-      seekerId = chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
-      this.match.seekerHistory.push(seekerId);
-      const chosen = this.players.get(seekerId);
-      if (chosen) chosen.wantsSeeker = false;
+    // Double mode has no designated seeker at all — everyone hides, so
+    // the whole selection dance below simply doesn't apply.
+    let seekerId = null;
+    if (mode !== 'double') {
+      if (ids.length === 1) {
+        // Solo test round: nobody to rotate through. You hide by default —
+        // only pressing "I want to seek" flips you to the seeker instead,
+        // and then there's nobody left to hide from you.
+        const solo = this.players.get(ids[0]);
+        seekerId = solo && solo.wantsSeeker ? ids[0] : null;
+        if (solo) solo.wantsSeeker = false;
+      } else {
+        // Random rather than join order, but still fair: everyone still gets
+        // exactly one turn before anybody repeats (the pool reopens once it's
+        // empty). Anyone who's raised their hand for this round jumps the
+        // queue — picked at random if more than one volunteers — otherwise
+        // it's a random draw from whoever hasn't sought yet.
+        let pool = ids.filter((id) => !this.match.seekerHistory.includes(id));
+        if (pool.length === 0) { this.match.seekerHistory = []; pool = ids.slice(); }
+        const volunteers = pool.filter((id) => {
+          const p = this.players.get(id);
+          return p && p.wantsSeeker;
+        });
+        const chooseFrom = volunteers.length ? volunteers : pool;
+        seekerId = chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
+        this.match.seekerHistory.push(seekerId);
+        const chosen = this.players.get(seekerId);
+        if (chosen) chosen.wantsSeeker = false;
+      }
     }
     this._broadcastPlayers();
 
@@ -279,6 +293,7 @@ export class Game {
       photoUrl: photoDataUrl,
       settings: this.settings,
       seekerId,
+      mode,
       roundIndex: this.match.roundIndex,
       totalRounds: this.match.totalRounds,
       startedAt: Date.now(),
@@ -301,9 +316,17 @@ export class Game {
   _applyRoundStart(payload) {
     this.phase = 'hide';
     this.settings = sanitizeMatchSettings(payload.settings);
+    const mode = payload.mode || 'classic';
     this.round = {
       photoUrl: payload.photoUrl,
+      mode,
       seekerId: payload.seekerId,
+      // Infection tracks the whole hunting team, starting with just the
+      // original seeker; classic/double never grow it (double doesn't use
+      // it at all — everyone's already a seeker of everyone else).
+      seekerIds: mode === 'infection'
+        ? new Set(payload.seekerId != null ? [payload.seekerId] : [])
+        : undefined,
       roundIndex: payload.roundIndex,
       totalRounds: payload.totalRounds,
       startedAt: payload.startedAt,
@@ -332,6 +355,7 @@ export class Game {
       roundIndex: payload.roundIndex,
       totalRounds: payload.totalRounds,
       hiderIds: this._hiderIds(payload.seekerId),
+      mode,
     });
   }
 
@@ -404,6 +428,11 @@ export class Game {
         blend: s.blend || 0,
       }));
 
+    if (this.round.mode === 'double') {
+      this._hostFinishHidePhaseDouble(sprites);
+      return;
+    }
+
     // Nobody managed to hide: there is nothing to seek, so close the
     // round out instead of dropping the seeker onto an empty photo.
     if (sprites.length === 0) {
@@ -431,6 +460,7 @@ export class Game {
     const payload = {
       sprites,
       seekerId: this.round.seekerId,
+      mode: this.round.mode,
       seekSeconds: this.settings.seekSeconds,
       tapsAllowed,
       startedAt: Date.now(),
@@ -451,26 +481,94 @@ export class Game {
     }
   }
 
+  // Double mode: nobody was excluded from hiding, so everybody now hunts
+  // everybody else at once. Each player gets a personalised sprite list
+  // (everyone but themselves) so the ordinary single-seeker seek screen
+  // runs completely unmodified on every client — "you" just never show
+  // up as a target on your own copy.
+  _hostFinishHidePhaseDouble(sprites) {
+    // Fewer than two hiders means at least one player (or, with exactly
+    // one, everyone) has nobody to hunt — wrap up immediately rather
+    // than opening a seek phase with no targets for anyone.
+    if (sprites.length < 2) {
+      this.phase = 'seek';
+      this.round.spriteList = sprites;
+      this.round.seekStartedAt = Date.now();
+      this.round.tapsAllowed = 0;
+      this.round.foundByPlayer = {};
+      this.round.tapsByPlayer = {};
+      this._hostEndRound(sprites.length === 0 ? 'no-hiders' : 'solo-test');
+      return;
+    }
+
+    const tapsAllowed = tapsForHiderCount(this.settings, sprites.length - 1);
+    const startedAt = Date.now();
+    this.phase = 'seek';
+    this.round.spriteList = sprites; // full roster — kept host-side for scoring/reveal
+    this.round.found = {};
+    this.round.foundByPlayer = {};
+    this.round.tapsByPlayer = {};
+    this.round.seekStartedAt = startedAt;
+    this.round.tapsAllowed = tapsAllowed;
+
+    for (const p of this.players.values()) {
+      const personalSprites = sprites.filter((s) => s.playerId !== p.id);
+      if (p.id === this.myId) {
+        this._emit('seek-started', {
+          amSeeker: true,
+          sprites: personalSprites,
+          seekSeconds: this.settings.seekSeconds,
+          tapsAllowed,
+          seekerName: null,
+          photoUrl: this.round.photoUrl,
+          mode: 'double',
+        });
+      } else {
+        this.net.sendTo(p.id, 'seek-start', {
+          sprites: personalSprites,
+          mode: 'double',
+          seekSeconds: this.settings.seekSeconds,
+          tapsAllowed,
+          startedAt,
+        });
+      }
+    }
+
+    this._seekTimer = setTimeout(
+      () => this._hostEndRound('time'),
+      this.settings.seekSeconds * 1000 + 800,
+    );
+    // Hints assume one seeker chasing one target list; there's no clean
+    // equivalent when everyone is hunting a different set at once.
+  }
+
   // ---------------- round: seek phase ----------------
 
   _applySeekStart(payload) {
     this.phase = 'seek';
+    const mode = payload.mode || this.round?.mode || 'classic';
     this.round = {
       ...(this.round || {}),
-      seekerId: payload.seekerId,
+      mode,
+      seekerId: payload.seekerId ?? null,
       spriteList: payload.sprites,
       found: {},
       taps: 0,
       tapsAllowed: payload.tapsAllowed,
       seekStartedAt: payload.startedAt,
+      foundByPlayer: mode === 'double' ? {} : undefined,
+      tapsByPlayer: mode === 'double' ? {} : undefined,
     };
     this._emit('seek-started', {
-      amSeeker: payload.seekerId === this.myId,
+      // Double mode has no seekerId at all — everyone is hunting their
+      // own (already-personalised) list, so everyone is "the seeker".
+      amSeeker: mode === 'double' ? true : payload.seekerId === this.myId,
       sprites: payload.sprites,
       seekSeconds: payload.seekSeconds,
       tapsAllowed: payload.tapsAllowed,
-      seekerName: this.playerName(payload.seekerId),
+      seekerName: mode === 'double' ? null : this.playerName(payload.seekerId),
       photoUrl: this.round.photoUrl,
+      mode,
     });
   }
 
@@ -482,13 +580,26 @@ export class Game {
 
   _hostReceiveTap(fromId, payload) {
     if (!this.round || this.phase !== 'seek') return;
-    if (fromId !== this.round.seekerId) return;
+    if (this.round.mode === 'double') { this._hostReceiveTapDouble(fromId, payload); return; }
+    if (!this._isOnSeekerTeam(fromId)) return;
     if (this.round.taps >= this.round.tapsAllowed) return;
 
     this.round.taps++;
     const foundAtSeconds = (Date.now() - this.round.seekStartedAt) / 1000;
+    let newSeekerId = null;
     if (payload.hit && payload.targetPlayerId && this.round.found[payload.targetPlayerId] == null) {
       this.round.found[payload.targetPlayerId] = foundAtSeconds;
+      // Infection: whoever just got found joins the hunt — unless they
+      // were the last one hiding, in which case the round is already
+      // over and there's nobody left for them to help find.
+      if (this.round.mode === 'infection' && !this.round.seekerIds.has(payload.targetPlayerId)) {
+        const live = (this.round.spriteList || []).filter((s) => this.players.has(s.playerId));
+        const stillHiding = live.some((s) => this.round.found[s.playerId] == null);
+        if (stillHiding) {
+          this.round.seekerIds.add(payload.targetPlayerId);
+          newSeekerId = payload.targetPlayerId;
+        }
+      }
     }
     const event = {
       targetPlayerId: payload.hit ? payload.targetPlayerId : null,
@@ -496,10 +607,49 @@ export class Game {
       x: payload.x, y: payload.y,
       foundAtSeconds,
       tapsLeft: Math.max(0, this.round.tapsAllowed - this.round.taps),
+      newSeekerId,
     };
     this._emit('seek-event', event);
     this.net.broadcast('seek-event', event);
     this._hostCheckSeekComplete();
+  }
+
+  // Classic: just the one seeker. Infection: the seeker plus anyone
+  // who's since been found and turned.
+  _isOnSeekerTeam(playerId) {
+    return this.round.mode === 'infection'
+      ? this.round.seekerIds.has(playerId)
+      : playerId === this.round.seekerId;
+  }
+
+  // Double mode: every player independently hunts their own personalised
+  // list, with their own tap budget. A find is shared the moment it
+  // happens (everyone's wanted list reflects it), but credit for scoring
+  // goes to whoever tapped it first.
+  _hostReceiveTapDouble(fromId, payload) {
+    const used = this.round.tapsByPlayer[fromId] || 0;
+    if (used >= this.round.tapsAllowed) return;
+    if (payload.targetPlayerId === fromId) return;
+
+    this.round.tapsByPlayer[fromId] = used + 1;
+    const foundAtSeconds = (Date.now() - this.round.seekStartedAt) / 1000;
+    if (payload.hit && payload.targetPlayerId && this.round.found[payload.targetPlayerId] == null) {
+      this.round.found[payload.targetPlayerId] = foundAtSeconds;
+      this.round.foundByPlayer[payload.targetPlayerId] = fromId;
+    }
+    const event = {
+      fromId,
+      targetPlayerId: payload.hit ? payload.targetPlayerId : null,
+      hit: !!payload.hit,
+      x: payload.x, y: payload.y,
+      foundAtSeconds,
+      tapsLeft: Math.max(0, this.round.tapsAllowed - this.round.tapsByPlayer[fromId]),
+    };
+    this._emit('seek-event', event);
+    this.net.broadcast('seek-event', event);
+    // No shared end-condition beyond the clock — each player's hunt runs
+    // independently, so there's no single "everyone's done" moment worth
+    // checking for.
   }
 
   _hostCheckSeekComplete() {
@@ -512,6 +662,9 @@ export class Game {
 
   _hostSendHint(level) {
     if (!this.round || this.phase !== 'seek') return;
+    // Double mode never schedules these timers, but guard anyway: there's
+    // no single target list a hint could point at.
+    if (this.round.mode === 'double') return;
     // Once the seeker has found even one hider, they're no longer
     // "struggling" — no more hand-holding for the rest of the round.
     if (Object.keys(this.round.found).length > 0) return;
@@ -539,6 +692,11 @@ export class Game {
     if (!this.round || this.phase === 'results') return;
     this._clearTimers();
 
+    if (this.round.mode === 'double') {
+      this._hostEndRoundDouble(reason);
+      return;
+    }
+
     const seekSeconds = this.settings.seekSeconds;
     const spriteList = this.round.spriteList || [];
     const live = spriteList.filter((s) => this.players.has(s.playerId));
@@ -564,9 +722,32 @@ export class Game {
       });
     }
 
-    // Solo test rounds with nobody volunteering to seek have no seeker at
-    // all (this.round.seekerId is null) — nothing to score, so no row.
-    if (this.round.seekerId != null) {
+    if (this.round.mode === 'infection') {
+      // The whole hunting team — the original seeker plus everyone who
+      // got found and turned — shares ONE pooled seeker score, split
+      // evenly. Splitting keeps a big chain no more lucrative in total
+      // than a single seeker having caught everyone alone; it doesn't
+      // try to weigh who personally landed which tap.
+      const team = [...this.round.seekerIds].filter((id) => this.players.has(id));
+      if (team.length > 0) {
+        const findTimes = live.map((s) => this.round.found[s.playerId]).filter((t) => t != null);
+        const seekParts = seekerScore({
+          findTimes, hiderCount: live.length, seekSeconds,
+          tapsLeft: Math.max(0, this.round.tapsAllowed - this.round.taps),
+        });
+        const share = Math.round(seekParts.total / team.length);
+        for (const id of team) {
+          rows.push({
+            playerId: id, name: this.playerName(id), role: 'seeker-team',
+            finds: findTimes.length, hiderCount: live.length, teamSize: team.length,
+            tapsUsed: this.round.taps, tapsAllowed: this.round.tapsAllowed,
+            parts: seekParts, points: share,
+          });
+        }
+      }
+    } else if (this.round.seekerId != null) {
+      // Solo test rounds with nobody volunteering to seek have no seeker
+      // at all (this.round.seekerId is null) — nothing to score, so no row.
       const findTimes = live
         .map((s) => this.round.found[s.playerId])
         .filter((t) => t != null);
@@ -582,6 +763,66 @@ export class Game {
       });
     }
 
+    const revealSprites = live.map((s) => ({
+      playerId: s.playerId, name: s.name, nx: s.nx, ny: s.ny,
+      dataUrl: s.dataUrl, character: s.character, scale: s.scale,
+      found: this.round.found[s.playerId] != null,
+    }));
+    this._finishRoundEnd(rows, revealSprites, reason);
+  }
+
+  // Double mode: nobody was purely a seeker or purely a hider, so every
+  // player gets a merged row — their own hiderScore (were they found, how
+  // well did they blend) plus a seekerScore built from the finds they
+  // personally credited themselves with in _hostReceiveTapDouble.
+  _hostEndRoundDouble(reason) {
+    const seekSeconds = this.settings.seekSeconds;
+    const live = (this.round.spriteList || []).filter((s) => this.players.has(s.playerId));
+    const hiderCount = Math.max(0, live.length - 1); // everyone hunts everyone else
+    const rows = [];
+
+    for (const s of live) {
+      const foundAt = this.round.found[s.playerId] ?? null;
+      const hiderParts = hiderScore({ foundAtSeconds: foundAt, seekSeconds, blend: s.blend });
+
+      const findTimes = Object.keys(this.round.foundByPlayer)
+        .filter((targetId) => this.round.foundByPlayer[targetId] === s.playerId)
+        .map((targetId) => this.round.found[targetId]);
+      const tapsUsed = this.round.tapsByPlayer[s.playerId] || 0;
+      const seekerParts = seekerScore({
+        findTimes, hiderCount, seekSeconds,
+        tapsLeft: Math.max(0, this.round.tapsAllowed - tapsUsed),
+      });
+
+      rows.push({
+        playerId: s.playerId, name: s.name, role: 'double',
+        foundAtSeconds: foundAt, blend: s.blend, hiderParts,
+        finds: findTimes.length, hiderCount,
+        tapsUsed, tapsAllowed: this.round.tapsAllowed, seekerParts,
+        points: hiderParts.total + seekerParts.total,
+      });
+    }
+
+    // Anyone who never even submitted a sprite still shows up, at zero.
+    for (const id of this._hiderIds()) {
+      if (live.some((s) => s.playerId === id)) continue;
+      rows.push({
+        playerId: id, name: this.playerName(id), role: 'double', noShow: true, points: 0,
+        hiderParts: { survivalPts: 0, neverFoundPts: 0, blendPts: 0, total: 0 },
+        seekerParts: { findPts: 0, foundAllPts: 0, tapPts: 0, total: 0 },
+        finds: 0, hiderCount, tapsUsed: 0, tapsAllowed: this.round.tapsAllowed,
+      });
+    }
+
+    const revealSprites = live.map((s) => ({
+      playerId: s.playerId, name: s.name, nx: s.nx, ny: s.ny,
+      dataUrl: s.dataUrl, character: s.character, scale: s.scale,
+      found: this.round.found[s.playerId] != null,
+    }));
+    this._finishRoundEnd(rows, revealSprites, reason);
+  }
+
+  _finishRoundEnd(rows, revealSprites, reason) {
     for (const row of rows) {
       const p = this.players.get(row.playerId);
       if (p) p.totalScore = (p.totalScore || 0) + row.points;
@@ -595,11 +836,7 @@ export class Game {
       roundNumber: this.match.roundIndex,
       totalRounds: this.match.totalRounds,
       isLast,
-      revealSprites: live.map((s) => ({
-        playerId: s.playerId, name: s.name, nx: s.nx, ny: s.ny,
-        dataUrl: s.dataUrl, character: s.character, scale: s.scale,
-        found: this.round.found[s.playerId] != null,
-      })),
+      revealSprites,
       totals: this._playersArray().map((p) => ({
         id: p.id, name: p.name, color: p.color, totalScore: p.totalScore || 0,
       })),

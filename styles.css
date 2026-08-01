@@ -238,6 +238,26 @@ body.body--full .app-shell { padding: 0; }
 .size-btn span:last-child { font-size: .74rem; font-weight: 700; }
 .size-btn.is-selected { border-color: var(--accent-2); color: var(--paper); }
 
+/* ---------- round mode picker ---------- */
+
+.mode-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+.mode-card {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--ink);
+  border: 2px solid var(--ink-line);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color .15s ease, background .15s ease;
+}
+.mode-card-icon { font-size: 1.7rem; flex-shrink: 0; }
+.mode-card-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mode-card-title { font-family: var(--font-display); font-weight: 800; color: var(--paper); font-size: 1.02rem; }
+.mode-card-desc { font-size: .8rem; color: var(--muted); line-height: 1.4; }
+.mode-card.is-selected { border-color: var(--accent); background: var(--ink-soft-2); }
+.mode-card.is-selected .mode-card-title { color: var(--accent); }
+
 .avatar-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 .avatar-swatch {
   width: 36px; height: 36px; border-radius: 50%;

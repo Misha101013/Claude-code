@@ -41,6 +41,8 @@ let seekSpriteImages = {};
 let currentSeekSprites = [];
 let seekFoundIds = new Set();
 let amSeeker = false;
+let seekMode = 'classic'; // 'classic' | 'infection' | 'double'
+let seekPhotoUrl = null;
 
 let currentRound = null;
 
@@ -486,7 +488,39 @@ $('input-photo-file').addEventListener('change', (e) => {
 
 $('btn-start-round').addEventListener('click', () => {
   if (!selectedPhotoUrl) return;
-  game.hostStartRound(selectedPhotoUrl);
+  openModeSelect();
+});
+
+// =====================================================================
+// Round mode
+// =====================================================================
+
+function openModeSelect() {
+  renderModeList();
+  showScreen('screen-mode-select');
+}
+
+function renderModeList() {
+  const cards = document.querySelectorAll('#mode-list .mode-card');
+  cards.forEach((card) => {
+    card.classList.toggle('is-selected', card.dataset.mode === playerSettings.lastMode);
+  });
+}
+
+document.querySelectorAll('#mode-list .mode-card').forEach((card) => {
+  card.addEventListener('click', () => {
+    playerSettings.lastMode = card.dataset.mode;
+    savePlayerSettings();
+    renderModeList();
+    sfx.tap();
+  });
+});
+
+$('btn-mode-back').addEventListener('click', () => showScreen('screen-lobby'));
+
+$('btn-confirm-mode').addEventListener('click', () => {
+  if (!selectedPhotoUrl) return;
+  game.hostStartRound(selectedPhotoUrl, playerSettings.lastMode || 'classic');
 });
 
 // =====================================================================
@@ -841,6 +875,8 @@ function fitSeekCanvas(img) {
 
 async function beginSeekPhase(payload) {
   amSeeker = payload.amSeeker;
+  seekMode = payload.mode || 'classic';
+  seekPhotoUrl = payload.photoUrl;
   currentSeekSprites = payload.sprites;
   seekFoundIds = new Set();
   seekSpriteImages = {};
@@ -1023,22 +1059,68 @@ function placeMissMarker(clientX, clientY) {
 
 game.on('seek-started', (payload) => beginSeekPhase(payload));
 
-game.on('seek-event', ({ targetPlayerId, hit, tapsLeft }) => {
-  if (hit && targetPlayerId) {
+game.on('seek-event', (event) => {
+  const { targetPlayerId, hit, tapsLeft, fromId, newSeekerId } = event;
+  // Double mode: taps/found are personal (fromId identifies the tapper).
+  // Classic/infection events carry no fromId — they're always "mine" for
+  // every current team member, since the whole team shares one budget.
+  const isPersonal = fromId === undefined || fromId === game.myId;
+  // Double mode also personalises the target list itself, so a hit that
+  // isn't even one of my targets (e.g. it was mine own sprite, or I'm
+  // simply not hunting that player) shouldn't touch my counters.
+  const isMyTarget = currentSeekSprites.some((s) => s.playerId === targetPlayerId);
+
+  if (hit && targetPlayerId && isMyTarget) {
     seekFoundIds.add(targetPlayerId);
-    sfx.found();
+    markWantedFound(targetPlayerId);
     const li = document.querySelector(`#spectate-found-list li[data-player-id="${targetPlayerId}"]`);
     if (li) li.innerHTML = `<span class="player-status-icon">✅</span><span>${game.playerName(targetPlayerId)}</span>`;
-  } else if (amSeeker) {
+    if (isPersonal) sfx.found();
+  } else if (amSeeker && isPersonal) {
     sfx.miss();
   }
-  if (amSeeker) {
-    if (hit && targetPlayerId) markWantedFound(targetPlayerId);
+  if (amSeeker && isPersonal) {
     $('seek-found-count').textContent = `Найдено: ${seekFoundIds.size} / ${currentSeekSprites.length}`;
     $('taps-value').textContent = String(tapsLeft);
     $('taps-value').classList.toggle('is-low', tapsLeft <= 2);
   }
+
+  // Infection: whoever was just found joins the hunt — if that's me,
+  // flip straight from the spectate screen into active seeking.
+  if (newSeekerId && newSeekerId === game.myId && !amSeeker) {
+    becomeInfected(tapsLeft);
+  }
 });
+
+// Infection mid-round promotion: you were hiding (spectating), got
+// found, and now join the hunt for whoever's left. Mirrors the
+// "amSeeker" half of beginSeekPhase, since the photo was never loaded
+// on the spectate branch.
+async function becomeInfected(tapsLeft) {
+  amSeeker = true;
+  showScreen('screen-seek');
+  $('seek-hint').textContent = 'Тебя нашли — теперь ищи остальных!';
+  renderWantedRow(currentSeekSprites);
+  for (const id of seekFoundIds) markWantedFound(id);
+  $('seek-found-count').textContent = `Найдено: ${seekFoundIds.size} / ${currentSeekSprites.length}`;
+  $('taps-value').textContent = String(tapsLeft);
+  $('taps-value').classList.toggle('is-low', tapsLeft <= 2);
+
+  const canvas = $('canvas-seek');
+  seekCtx = canvas.getContext('2d');
+  ensureSeekZoom().reset();
+  if (!seekImage || !seekImage.complete) {
+    seekImage = new Image();
+    await new Promise((res, rej) => {
+      seekImage.onload = res;
+      seekImage.onerror = rej;
+      seekImage.src = seekPhotoUrl;
+    });
+  }
+  fitSeekCanvas(seekImage);
+  redrawSeekCanvas();
+  sfx.hint();
+}
 
 game.on('hint', ({ nx, ny, radiusFrac }) => {
   if (!amSeeker) return;
@@ -1096,9 +1178,10 @@ function renderRoundRows(rows) {
   const ordered = [...rows].sort((a, b) => b.points - a.points);
   for (const row of ordered) {
     const li = document.createElement('li');
+    const ROLE_ICON = { seeker: '🔎', 'seeker-team': '🧟', double: '🔁', hider: '🎨' };
     const icon = document.createElement('span');
     icon.className = 'score-role';
-    icon.textContent = row.role === 'seeker' ? '🔎' : '🎨';
+    icon.textContent = ROLE_ICON[row.role] || '🎨';
 
     const body = document.createElement('div');
     body.className = 'score-body';
@@ -1126,6 +1209,22 @@ function describeRow(row) {
     if (p.findPts) bits.push(`скорость +${p.findPts}`);
     if (p.foundAllPts) bits.push(`все найдены +${p.foundAllPts}`);
     if (p.tapPts) bits.push(`экономия +${p.tapPts}`);
+    return bits.join(' · ');
+  }
+  if (row.role === 'seeker-team') {
+    // Infection: the whole team (original seeker + everyone who got
+    // found and turned) shares one pooled score, split evenly.
+    const bits = [`команда из ${row.teamSize}`, `нашли ${row.finds} из ${row.hiderCount}`, `попытки ${row.tapsUsed}/${row.tapsAllowed}`, `доля +${row.points}`];
+    return bits.join(' · ');
+  }
+  if (row.role === 'double') {
+    if (row.noShow) return 'не успел спрятаться';
+    const hp = row.hiderParts, sp = row.seekerParts;
+    const bits = [];
+    bits.push(row.foundAtSeconds == null ? 'не найден' : `нашли за ${Math.round(row.foundAtSeconds)}с`);
+    bits.push(`маскировка ${Math.round((row.blend || 0) * 100)}%`);
+    bits.push(`сам нашёл ${row.finds} из ${row.hiderCount}`);
+    bits.push(`прячась +${hp.total} · ища +${sp.total}`);
     return bits.join(' · ');
   }
   if (row.noShow) return 'не успел спрятаться';

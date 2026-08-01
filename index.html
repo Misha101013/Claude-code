@@ -165,6 +165,42 @@
     </div>
   </section>
 
+  <!-- ============ MODE SELECT ============ -->
+  <section id="screen-mode-select" class="screen">
+    <div class="card">
+      <div class="screen-head">
+        <h2 class="screen-title">Режим раунда</h2>
+        <button id="btn-mode-back" class="btn btn--ghost btn--sm" type="button">Назад</button>
+      </div>
+
+      <div class="mode-list" id="mode-list">
+        <button class="mode-card" data-mode="classic" type="button">
+          <span class="mode-card-icon">🔎</span>
+          <span class="mode-card-body">
+            <span class="mode-card-title">Обычный</span>
+            <span class="mode-card-desc">Один искатель ищет всех остальных.</span>
+          </span>
+        </button>
+        <button class="mode-card" data-mode="infection" type="button">
+          <span class="mode-card-icon">🧟</span>
+          <span class="mode-card-body">
+            <span class="mode-card-title">Инфекция</span>
+            <span class="mode-card-desc">Кого нашли — тот сам присоединяется к поиску остальных.</span>
+          </span>
+        </button>
+        <button class="mode-card" data-mode="double" type="button">
+          <span class="mode-card-icon">🔁</span>
+          <span class="mode-card-body">
+            <span class="mode-card-title">Дабл</span>
+            <span class="mode-card-desc">Сначала прячутся все, потом все одновременно ищут друг друга.</span>
+          </span>
+        </button>
+      </div>
+
+      <button id="btn-confirm-mode" class="btn btn--primary btn--lg" type="button">Начать раунд</button>
+    </div>
+  </section>
+
   <!-- ============ HIDE (paint) ============ -->
   <section id="screen-hide" class="screen screen--full">
     <div class="camera-wrap" id="canvas-wrap">

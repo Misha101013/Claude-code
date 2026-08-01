@@ -69,6 +69,7 @@ export const PLAYER_DEFAULTS = {
   size: 'medium',
   sound: true,
   testMode: false,
+  lastMode: 'classic', // last round mode picked, remembered for convenience
 };
 
 // A per-player choice, not a match setting — everyone picks their own.
