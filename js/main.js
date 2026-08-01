@@ -28,6 +28,9 @@ let hideDeadline = 0;
 let hideSubmitted = false;
 let lastTickSecond = -1;
 
+let waitingTimerHandle = null;
+let waitingDeadline = 0;
+
 let seekTimerHandle = null;
 let seekDeadline = 0;
 let seekZoom = null;
@@ -281,6 +284,7 @@ function renderRulesSummary() {
   if (s.hints) chips.push('💡 подсказки');
   if (s.blendMeter) chips.push('📊 счётчик маскировки');
   if (s.autoFillHelper) chips.push('🪄 подсказка фона');
+  if (s.showHiders) chips.push('👀 видно других');
   $('lobby-rules').innerHTML = chips
     .map((c) => `<span class="rule-chip">${c}</span>`).join('');
 }
@@ -345,6 +349,7 @@ function leaveRoom() {
   game.leave();
   clearInterval(hideTimerHandle);
   clearInterval(seekTimerHandle);
+  clearInterval(waitingTimerHandle);
   selectedPhotoUrl = null;
   showScreen('screen-menu');
 }
@@ -423,6 +428,7 @@ function ensureEngine() {
       stageEl: $('canvas-stage'),
       photoCanvas: $('canvas-photo'),
       paintCanvas: $('canvas-paint'),
+      peersCanvas: $('canvas-peers'),
     });
     engine.onColorPicked = (hex) => setActiveColor(hex);
     engine.onBlendChange = (score) => updateBlendBadge(score);
@@ -558,7 +564,7 @@ async function beginHidePhase(payload) {
   await eng.loadPhoto(payload.photoUrl);
   eng.beginPlacement();
 
-  hideDeadline = Date.now() + payload.hideSeconds * 1000;
+  hideDeadline = (payload.startedAt || Date.now()) + payload.hideSeconds * 1000;
   clearInterval(hideTimerHandle);
   hideTimerHandle = setInterval(checkHideDeadline, 200);
   checkHideDeadline();
@@ -628,7 +634,8 @@ function submitHide() {
   // drive us all the way into the seek phase, and that screen must be
   // the one left standing.
   const entries = (currentRound?.hiderIds || []).map((id) => ({ id, name: game.playerName(id) }));
-  showWaitingScreen(entries, 'Ждём, пока все спрячутся…', 'Ты уже спрятался.');
+  const deadline = currentRound ? currentRound.startedAt + currentRound.hideSeconds * 1000 : null;
+  showWaitingScreen(entries, 'Ждём, пока все спрячутся…', 'Ты уже спрятался.', deadline);
   game.submitSprite(engine.exportSprite());
 }
 
@@ -636,7 +643,7 @@ function submitHide() {
 // Waiting screen
 // =====================================================================
 
-function showWaitingScreen(entries, title, sub) {
+function showWaitingScreen(entries, title, sub, deadline) {
   $('waiting-title').textContent = title;
   $('waiting-sub').textContent = sub || '';
   const ul = $('waiting-list');
@@ -647,7 +654,25 @@ function showWaitingScreen(entries, title, sub) {
     li.innerHTML = `<span class="player-status-icon">⏳</span><span>${entry.name}</span>`;
     ul.appendChild(li);
   }
+
+  clearInterval(waitingTimerHandle);
+  waitingTimerHandle = null;
+  if (deadline) {
+    waitingDeadline = deadline;
+    $('waiting-timer').hidden = false;
+    checkWaitingDeadline();
+    waitingTimerHandle = setInterval(checkWaitingDeadline, 250);
+  } else {
+    $('waiting-timer').hidden = true;
+  }
+
   showScreen('screen-waiting');
+}
+
+function checkWaitingDeadline() {
+  const left = Math.max(0, Math.ceil((waitingDeadline - Date.now()) / 1000));
+  $('waiting-timer').textContent = left;
+  if (left <= 0) { clearInterval(waitingTimerHandle); waitingTimerHandle = null; }
 }
 
 game.on('hide-progress', ({ readyIds }) => {
@@ -655,6 +680,12 @@ game.on('hide-progress', ({ readyIds }) => {
     const li = document.querySelector(`#waiting-list li[data-player-id="${id}"]`);
     if (li) li.querySelector('.player-status-icon').textContent = '✅';
   }
+});
+
+// Optional setting: another hider just finished — show their spot,
+// dimmed, on our own canvas so we don't pick the same corner.
+game.on('peer-sprite', (payload) => {
+  if (engine) engine.setPeerSprite(payload.playerId, payload);
 });
 
 game.on('round-started', (payload) => {
@@ -665,6 +696,7 @@ game.on('round-started', (payload) => {
       hiderEntries,
       '🔎 Этот раунд ищешь ты',
       `Раунд ${payload.roundIndex + 1} из ${payload.totalRounds}. Ждём, пока все спрячутся.`,
+      payload.startedAt + payload.hideSeconds * 1000,
     );
   } else {
     beginHidePhase(payload);
@@ -725,6 +757,8 @@ async function beginSeekPhase(payload) {
   seekFoundIds = new Set();
   seekSpriteImages = {};
   lastTickSecond = -1;
+  clearInterval(waitingTimerHandle);
+  waitingTimerHandle = null;
   document.querySelectorAll('.found-marker, .miss-marker').forEach((el) => el.remove());
   $('hint-ring').hidden = true;
 
@@ -913,8 +947,10 @@ const REASON_TEXT = {
 game.on('round-ended', (payload) => {
   clearInterval(seekTimerHandle);
   clearInterval(hideTimerHandle);
+  clearInterval(waitingTimerHandle);
   seekTimerHandle = null;
   hideTimerHandle = null;
+  waitingTimerHandle = null;
   sfx.roundEnd();
 
   $('results-round-badge').textContent = `${payload.roundNumber} / ${payload.totalRounds}`;

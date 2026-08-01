@@ -107,6 +107,7 @@ export class Game {
     });
     n.on('round-start', (p) => this._applyRoundStart(p));
     n.on('hide-progress', (p) => this._emit('hide-progress', p));
+    n.on('peer-sprite', (p) => this._emit('peer-sprite', p));
     n.on('seek-start', (p) => this._applySeekStart(p));
     n.on('seek-event', (p) => this._emit('seek-event', p));
     n.on('hint', (p) => this._emit('hint', p));
@@ -277,6 +278,7 @@ export class Game {
       amSeeker: payload.seekerId === this.myId,
       photoUrl: payload.photoUrl,
       hideSeconds: this.settings.hideSeconds,
+      startedAt: payload.startedAt,
       seekerId: payload.seekerId,
       seekerName: this.playerName(payload.seekerId),
       roundIndex: payload.roundIndex,
@@ -302,7 +304,28 @@ export class Game {
     const readyIds = Object.keys(this.round.sprites);
     this.net.broadcast('hide-progress', { readyIds });
     this._emit('hide-progress', { readyIds });
+    this._relayPeerSprite(playerId, sprite);
     this._hostCheckHideComplete();
+  }
+
+  // Optional setting: once a hider finishes, show their spot (dimmed) to
+  // the OTHER hiders still working — never to the seeker, who this
+  // message is never sent to.
+  _relayPeerSprite(playerId, sprite) {
+    if (!this.settings.showHiders) return;
+    const payload = {
+      playerId,
+      dataUrl: sprite.dataUrl,
+      nx: sprite.nx,
+      ny: sprite.ny,
+      character: sprite.character || 'cat',
+      scale: sprite.scale || 1,
+    };
+    for (const id of this._hiderIds()) {
+      if (id === playerId) continue;
+      if (id === this.myId) this._emit('peer-sprite', payload);
+      else this.net.sendTo(id, 'peer-sprite', payload);
+    }
   }
 
   _hostCheckHideComplete() {

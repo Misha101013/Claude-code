@@ -397,11 +397,14 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 26px; }
   transform-origin: 50% 50%;
   will-change: transform;
 }
-#canvas-photo, #canvas-paint, #canvas-seek {
+#canvas-photo, #canvas-paint, #canvas-peers, #canvas-seek {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
 }
+/* Purely a dimmed reference layer — must never intercept a tap meant
+   for placement/painting on the canvas above it. */
+#canvas-peers { pointer-events: none; }
 
 .status-pill {
   position: absolute;

@@ -51,12 +51,19 @@ const MAGIC_COVERAGE = 3.0; // expected dab-area-over-circle-area multiple; ~95%
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 export class PaintEngine {
-  constructor({ wrapEl, stageEl, photoCanvas, paintCanvas }) {
+  constructor({ wrapEl, stageEl, photoCanvas, paintCanvas, peersCanvas }) {
     this.wrapEl = wrapEl;
     this.photoCanvas = photoCanvas;
     this.paintCanvas = paintCanvas;
     this.photoCtx = photoCanvas.getContext('2d', { willReadFrequently: true });
     this.paintCtx = paintCanvas.getContext('2d');
+
+    // Optional: other hiders' already-submitted spots, shown dimmed
+    // underneath your own sprite when the host has the setting on.
+    this.peersCanvas = peersCanvas || null;
+    this.peerCtx = peersCanvas ? peersCanvas.getContext('2d') : null;
+    this.peerSprites = new Map(); // playerId -> {nx, ny, character, scale}
+    this.peerImages = new Map(); // playerId -> {img, src}
 
     this.character = 'cat';
     this.charScale = 1;
@@ -131,6 +138,7 @@ export class PaintEngine {
     this.blend = null;
     this._magicUsed = false;
     this.magicArmed = false;
+    this.clearPeerSprites();
   }
 
   get magicAvailable() { return this.magicHelperEnabled && !this._magicUsed; }
@@ -147,7 +155,9 @@ export class PaintEngine {
     } else {
       cssH = rect.height; cssW = rect.height * imgRatio;
     }
-    for (const c of [this.photoCanvas, this.paintCanvas]) {
+    const canvases = [this.photoCanvas, this.paintCanvas];
+    if (this.peersCanvas) canvases.push(this.peersCanvas);
+    for (const c of canvases) {
       c.style.width = cssW + 'px';
       c.style.height = cssH + 'px';
       c.width = Math.round(cssW * this.dpr);
@@ -158,6 +168,43 @@ export class PaintEngine {
     this.photoCtx.setTransform(1, 0, 0, 1, 0, 0);
     this.photoCtx.drawImage(this.image, 0, 0, this.canvasW, this.canvasH);
     this._redrawSprite();
+    this._redrawPeers();
+  }
+
+  // ---- other hiders' spots (optional, host-controlled setting) ----
+
+  setPeerSprite(playerId, data) {
+    let entry = this.peerImages.get(playerId);
+    if (!entry || entry.src !== data.dataUrl) {
+      const img = new Image();
+      entry = { img, src: data.dataUrl };
+      img.onload = () => this._redrawPeers();
+      img.src = data.dataUrl;
+      this.peerImages.set(playerId, entry);
+    }
+    this.peerSprites.set(playerId, data);
+    this._redrawPeers();
+  }
+
+  clearPeerSprites() {
+    this.peerSprites.clear();
+    this.peerImages.clear();
+    this._redrawPeers();
+  }
+
+  _redrawPeers() {
+    if (!this.peerCtx || !this.canvasW) return;
+    const ctx = this.peerCtx;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, this.canvasW, this.canvasH);
+    ctx.globalAlpha = 0.42;
+    for (const [playerId, data] of this.peerSprites) {
+      const entry = this.peerImages.get(playerId);
+      if (entry && entry.img.complete && entry.img.naturalWidth) {
+        drawSpriteOnCanvas(ctx, entry.img, data.nx, data.ny, this.canvasW, this.canvasH, data.scale || 1);
+      }
+    }
+    ctx.globalAlpha = 1;
   }
 
   _resetOffscreen() {

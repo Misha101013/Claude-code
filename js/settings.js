@@ -16,6 +16,7 @@ export const MATCH_DEFAULTS = {
   blendMeter: true,
   charScale: 1,
   autoFillHelper: false,
+  showHiders: false,
 };
 
 // Descriptors drive the settings UI, so adding a setting here is enough
@@ -60,6 +61,10 @@ export const MATCH_FIELDS = [
   {
     key: 'autoFillHelper', label: 'Подсказка фона', type: 'toggle',
     hint: 'Раз за раунд можно тапнуть волшебной палочкой — точно, но по-прежнему мазками кисти, перерисует фон в приличном круге вокруг. Не пиксель-в-пиксель, но очень близко.',
+  },
+  {
+    key: 'showHiders', label: 'Видно других прячущихся', type: 'toggle',
+    hint: 'Пока сам прячешься, будешь полупрозрачно видеть, куда уже спрятались остальные — чтобы не сесть друг другу на голову. Искателю это никогда не показывается.',
   },
 ];
 
