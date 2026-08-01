@@ -326,6 +326,13 @@ function renderPlayers(players) {
     const name = document.createElement('span');
     name.textContent = p.name + (p.isHost ? ' 👑' : '');
     li.append(dot, chr, name);
+    if (p.wantsSeeker) {
+      const raise = document.createElement('span');
+      raise.className = 'player-volunteer';
+      raise.title = 'Хочет быть охотником';
+      raise.textContent = '🙋';
+      li.appendChild(raise);
+    }
     if (p.totalScore) {
       const score = document.createElement('span');
       score.className = 'player-score';
@@ -340,6 +347,15 @@ function renderPlayers(players) {
     ul.appendChild(li);
   }
   $('btn-start-round').disabled = !(selectedPhotoUrl && players.length >= 2);
+  updateVolunteerButton();
+}
+
+function updateVolunteerButton() {
+  const me = game.players.get(game.myId);
+  const wants = !!(me && me.wantsSeeker);
+  const btn = $('btn-volunteer-seeker');
+  btn.classList.toggle('is-active', wants);
+  btn.textContent = wants ? '✋ Уже в очереди на охотника' : '🙋 Хочу быть охотником';
 }
 
 game.on('players-changed', (players) => {
@@ -375,6 +391,14 @@ function leaveRoom() {
   showScreen('screen-menu');
 }
 $('btn-leave-lobby').addEventListener('click', leaveRoom);
+$('btn-volunteer-seeker').addEventListener('click', () => {
+  const me = game.players.get(game.myId);
+  const next = !(me && me.wantsSeeker);
+  if (me) me.wantsSeeker = next; // optimistic, players-update confirms it
+  game.setWantsSeeker(next);
+  updateVolunteerButton();
+  sfx.tap();
+});
 $('btn-match-leave').addEventListener('click', leaveRoom);
 $('btn-edit-rules').addEventListener('click', () => openSettings('screen-lobby'));
 

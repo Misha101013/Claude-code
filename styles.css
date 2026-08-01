@@ -281,6 +281,7 @@ body.body--full .app-shell { padding: 0; }
 .btn--primary:hover:not(:disabled) { filter: brightness(1.08); }
 .btn--secondary { background: var(--ink-soft-2); color: var(--paper); border: 1.5px solid var(--ink-line); }
 .btn--secondary:hover:not(:disabled) { border-color: var(--accent-2); }
+.btn--secondary.is-active { border-color: var(--accent-2); background: var(--accent-2); color: var(--ink); }
 .btn--ghost { background: transparent; color: var(--muted); }
 .btn--ghost:hover:not(:disabled) { color: var(--paper); }
 
@@ -376,6 +377,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 26px; }
 .player-char { font-size: 1.05rem; }
 .player-tag { margin-left: auto; font-size: .7rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 700; }
 .player-tag--you { color: var(--accent-3); }
+.player-volunteer { font-size: .9rem; }
 .player-score { margin-left: auto; font-family: var(--font-display); font-weight: 800; color: var(--accent-2); }
 .player-status-icon { margin-left: auto; font-size: 1.1rem; }
 

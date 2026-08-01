@@ -69,6 +69,7 @@ export class Game {
       this.players.set(fromId, {
         id: fromId, name: payload.name, color: payload.color,
         character: payload.character || 'cat', isHost: false, totalScore: 0,
+        wantsSeeker: false,
       });
       this._broadcastPlayers();
       this.net.sendTo(fromId, 'match-config', { settings: this.settings });
@@ -117,6 +118,12 @@ export class Game {
     n.on('round-end', (p) => this._applyRoundEnd(p));
     n.on('await-photo', (p) => this._applyAwaitPhoto(p));
     n.on('match-end', (p) => this._applyMatchEnd(p));
+
+    n.on('want-seeker', (payload, fromId) => {
+      if (!this.isHost) return;
+      const p = this.players.get(fromId);
+      if (p) { p.wantsSeeker = !!payload.want; this._broadcastPlayers(); }
+    });
 
     n.on('sprite-submit', (payload, fromId) => {
       if (this.isHost) this._hostReceiveSprite(fromId, payload);
@@ -171,7 +178,7 @@ export class Game {
 
   async createRoom(profile) {
     const code = await this.net.createRoom();
-    this.me = { id: 'host', ...profile, isHost: true, totalScore: 0 };
+    this.me = { id: 'host', ...profile, isHost: true, totalScore: 0, wantsSeeker: false };
     this.players.set('host', this.me);
     this.phase = 'lobby';
     return code;
@@ -179,7 +186,7 @@ export class Game {
 
   async joinRoom(code, profile) {
     await this.net.joinRoom(code);
-    this.me = { id: this.net.myId, ...profile, isHost: false, totalScore: 0 };
+    this.me = { id: this.net.myId, ...profile, isHost: false, totalScore: 0, wantsSeeker: false };
     this.net.send('join', { playerId: this.net.myId, ...profile });
     this.phase = 'lobby';
   }
@@ -191,6 +198,19 @@ export class Game {
     this.round = null;
     this.match = null;
     this.phase = 'menu';
+  }
+
+  // A player raising (or lowering) their hand to seek next round. Hosts
+  // apply it directly; joiners ask the host, who's the one deciding who
+  // seeks next.
+  setWantsSeeker(want) {
+    if (this.isHost) {
+      const p = this.players.get(this.myId);
+      if (p) p.wantsSeeker = !!want;
+      this._broadcastPlayers();
+    } else {
+      this.net.send('want-seeker', { want: !!want });
+    }
   }
 
   hostUpdateSettings(settings) {
@@ -218,20 +238,28 @@ export class Game {
       this.match = {
         roundIndex: 0,
         totalRounds: roundsForPlayerCount(this.settings, ids.length),
-        seekerOrder: ids.slice(),
+        seekerHistory: [],
       };
       for (const p of this.players.values()) p.totalScore = 0;
     }
 
-    // Skip past anyone who left since the order was drawn.
-    let seekerId = null;
-    for (let i = 0; i < this.match.seekerOrder.length && !seekerId; i++) {
-      const candidate = this.match.seekerOrder[
-        (this.match.roundIndex + i) % this.match.seekerOrder.length
-      ];
-      if (this.players.has(candidate)) seekerId = candidate;
-    }
-    if (!seekerId) seekerId = ids[0];
+    // Random rather than join order, but still fair: everyone still gets
+    // exactly one turn before anybody repeats (the pool reopens once it's
+    // empty). Anyone who's raised their hand for this round jumps the
+    // queue — picked at random if more than one volunteers — otherwise
+    // it's a random draw from whoever hasn't sought yet.
+    let pool = ids.filter((id) => !this.match.seekerHistory.includes(id));
+    if (pool.length === 0) { this.match.seekerHistory = []; pool = ids.slice(); }
+    const volunteers = pool.filter((id) => {
+      const p = this.players.get(id);
+      return p && p.wantsSeeker;
+    });
+    const chooseFrom = volunteers.length ? volunteers : pool;
+    const seekerId = chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
+    this.match.seekerHistory.push(seekerId);
+    const chosen = this.players.get(seekerId);
+    if (chosen) chosen.wantsSeeker = false;
+    this._broadcastPlayers();
 
     const payload = {
       photoUrl: photoDataUrl,
@@ -271,7 +299,7 @@ export class Game {
       this.match = {
         roundIndex: payload.roundIndex,
         totalRounds: payload.totalRounds,
-        seekerOrder: [],
+        seekerHistory: [],
       };
     }
     this.match.roundIndex = payload.roundIndex;
@@ -597,7 +625,7 @@ export class Game {
   hostResetMatch() {
     if (!this.isHost) return;
     this.match = null;
-    for (const p of this.players.values()) p.totalScore = 0;
+    for (const p of this.players.values()) { p.totalScore = 0; p.wantsSeeker = false; }
     this._broadcastPlayers();
     this.hostNextRound();
   }
