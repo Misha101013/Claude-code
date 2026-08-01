@@ -178,6 +178,9 @@ export class Game {
 
   async createRoom(profile) {
     const code = await this.net.createRoom();
+    // Pick up anything changed in Settings before the room existed — the
+    // constructor's snapshot is already stale by then.
+    this.settings = sanitizeMatchSettings(matchSettings);
     this.me = { id: 'host', ...profile, isHost: true, totalScore: 0, wantsSeeker: false };
     this.players.set('host', this.me);
     this.phase = 'lobby';

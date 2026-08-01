@@ -603,11 +603,23 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 26px; }
 .icon-btn--done { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 800; }
 .icon-btn--done:disabled { opacity: .4; }
 .icon-btn--magic {
+  position: relative;
+  overflow: hidden;
   border-color: rgba(255,210,63,.55);
   box-shadow: 0 0 0 2px rgba(255,210,63,.12);
   animation: magic-glow 2.2s ease-in-out infinite;
 }
 .icon-btn--magic:disabled { animation: none; box-shadow: none; border-color: var(--ink-line); }
+.icon-btn--magic.is-selected { border-color: #ffd23f; }
+/* Remaining budget for the precision brush — shrinks from full width as
+   it's used, so the limit is visible without a separate readout. */
+.magic-gauge {
+  position: absolute; left: 0; bottom: 0; width: 100%; height: 3px;
+  background: #ffd23f;
+  transform: scaleX(1);
+  transform-origin: left center;
+  transition: transform .1s linear;
+}
 @media (prefers-reduced-motion: reduce) { .icon-btn--magic { animation: none; } }
 @keyframes magic-glow {
   0%, 100% { box-shadow: 0 0 0 2px rgba(255,210,63,.12); }

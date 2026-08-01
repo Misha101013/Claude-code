@@ -38,15 +38,15 @@ export const BRUSHES = [
   { id: 'smudge', label: '👆', title: 'Палец — растушёвывает и тянет цвета друг в друга' },
 ];
 
-// Once-per-round helper: a big circle filled with many small soft dabs,
-// each one sampling the real photo at its OWN position (not a single
-// shared blur), so the patch actually tracks local detail — a brick
-// edge, a leaf, a shadow — instead of smearing the area into one flat
-// average. Still visibly brushed, not a pasted photo crop: every dab is
-// a soft, semi-transparent, lightly jittered circle, not a hard pixel copy.
-const MAGIC_RADIUS_BOX = 26; // box units — big enough to cover most of a limb
-const MAGIC_DAB_RADIUS_BOX = 3.2;
-const MAGIC_COVERAGE = 3.0; // expected dab-area-over-circle-area multiple; ~95% coverage
+// Optional helper: a real drag-able brush, not a one-tap stamp. Each dab
+// samples the photo at its OWN exact position (no jitter — as precise as
+// the eyedropper) and lays it down with a soft feathered edge so it still
+// reads as brushed, not a pasted photo crop. Balance comes from a hard
+// budget instead of a "once per round" gate: enough dabs to rescue one
+// genuinely tricky patch, nowhere near enough to repaint the whole sprite.
+const MAGIC_BRUSH_RADIUS_BOX = 7.5;
+const MAGIC_STEP_BOX = 2.6; // spacing between dabs while dragging
+const MAGIC_BUDGET_TOTAL = 46; // dabs per round
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
@@ -90,8 +90,11 @@ export class PaintEngine {
 
     this.magicHelperEnabled = false;
     this.magicArmed = false;
-    this._magicUsed = false;
-    this.onMagicUsed = null;
+    this.magicBudgetTotal = MAGIC_BUDGET_TOTAL;
+    this.magicBudget = MAGIC_BUDGET_TOTAL;
+    this._magicDrawing = false;
+    this.onMagicUsed = null; // fires (true) the moment the budget hits zero
+    this.onMagicBudgetChange = null; // fires with the remaining fraction (0..1) after every dab
 
     this.image = null;
     this.naturalW = 0; this.naturalH = 0;
@@ -136,12 +139,12 @@ export class PaintEngine {
     this._fit();
     this._resetOffscreen();
     this.blend = null;
-    this._magicUsed = false;
+    this.magicBudget = this.magicBudgetTotal;
     this.magicArmed = false;
     this.clearPeerSprites();
   }
 
-  get magicAvailable() { return this.magicHelperEnabled && !this._magicUsed; }
+  get magicAvailable() { return this.magicHelperEnabled && this.magicBudget > 0; }
 
   _fit() {
     if (!this.image) return;
@@ -308,10 +311,15 @@ export class PaintEngine {
     if (this.phase !== 'painting') return;
 
     if (this.magicArmed) {
+      if (this.magicBudget <= 0) return;
+      this._pushUndo();
+      this.drawing = true;
+      this._magicDrawing = true;
+      this.onStrokeStart && this.onStrokeStart();
       const b = this._canvasPointToBox(p.x, p.y);
-      this.magicArmed = false;
-      const used = this.useMagicCircle(b.x, b.y);
-      this.onMagicUsed && this.onMagicUsed(used);
+      this._lastBox = b;
+      this._stampMagicAt(b.x, b.y);
+      this._redrawSprite();
       return;
     }
 
@@ -337,7 +345,8 @@ export class PaintEngine {
       this.setPlacementFromCanvasPoint(p.x, p.y);
     } else if (this.phase === 'painting' && this.drawing) {
       const b = this._canvasPointToBox(p.x, p.y);
-      this._strokeSegment(this._lastBox, b);
+      if (this._magicDrawing) this._magicStrokeSegment(this._lastBox, b);
+      else this._strokeSegment(this._lastBox, b);
       this._lastBox = b;
       this._redrawSprite();
     }
@@ -347,6 +356,13 @@ export class PaintEngine {
     const wasDrawing = this.drawing;
     this.drawing = false;
     this._lastBox = null;
+    if (this._magicDrawing) {
+      this._magicDrawing = false;
+      if (this.magicBudget <= 0) {
+        this.magicArmed = false;
+        this.onMagicUsed && this.onMagicUsed(true);
+      }
+    }
     if (wasDrawing) this.recomputeBlend();
   }
 
@@ -355,6 +371,7 @@ export class PaintEngine {
   _cancelStroke() {
     if (!this.drawing) return;
     this.drawing = false;
+    this._magicDrawing = false;
     this._lastBox = null;
     this.undo();
   }
@@ -484,57 +501,46 @@ export class PaintEngine {
     return { r: d[0], g: d[1], b: d[2] };
   }
 
-  // ---- once-per-round background helper ----
+  // ---- limited-budget background helper ----
 
-  useMagicCircle(boxX, boxY) {
-    if (!this.magicAvailable || !this.image) return false;
-    this._magicUsed = true;
-
+  // One dab: sample the photo at this EXACT box-space position (through
+  // the same mapping placement/painting already use, so it's pixel-
+  // accurate, not an approximation) and lay it down with a soft feathered
+  // edge — precise colour, still a brushed edge rather than a hard copy.
+  _stampMagicAt(bx, by) {
+    if (this.magicBudget <= 0 || !this.image) return;
     const r = this.spriteScreenRect();
     const k = this.k;
+    const canvasX = r.x + bx * k;
+    const canvasY = r.y + by * k;
+    const hex = this.sampleColorAt(canvasX, canvasY);
 
-    this._pushUndo();
     const ctx = this.offCtx;
     ctx.save();
     ctx.clip(this.charPath);
+    const grad = ctx.createRadialGradient(bx, by, 0, bx, by, MAGIC_BRUSH_RADIUS_BOX);
+    grad.addColorStop(0, hexToRgba(hex, 0.88));
+    grad.addColorStop(0.65, hexToRgba(hex, 0.6));
+    grad.addColorStop(1, hexToRgba(hex, 0));
+    ctx.fillStyle = grad;
     ctx.beginPath();
-    ctx.arc(boxX, boxY, MAGIC_RADIUS_BOX, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Many small dabs, each sampling the photo at its OWN position —
-    // that's what makes the patch track real local detail (a mortar
-    // line, a leaf edge, a shadow) instead of smearing everything into
-    // one flat blur. Random (not grid) placement plus soft gradient
-    // edges and a light per-dab jitter keep it reading as hand-brushed
-    // rather than a pasted-in photo crop.
-    const area = Math.PI * MAGIC_RADIUS_BOX * MAGIC_RADIUS_BOX;
-    const dabArea = Math.PI * MAGIC_DAB_RADIUS_BOX * MAGIC_DAB_RADIUS_BOX;
-    const dabCount = Math.round((area / dabArea) * MAGIC_COVERAGE);
-
-    for (let i = 0; i < dabCount; i++) {
-      const ang = Math.random() * Math.PI * 2;
-      const dist = Math.sqrt(Math.random()) * MAGIC_RADIUS_BOX;
-      const dabX = boxX + Math.cos(ang) * dist;
-      const dabY = boxY + Math.sin(ang) * dist;
-
-      const canvasX = r.x + dabX * k;
-      const canvasY = r.y + dabY * k;
-      const hex = jitterHexColor(this.sampleColorAt(canvasX, canvasY), 7);
-
-      const dabR = MAGIC_DAB_RADIUS_BOX * (0.75 + Math.random() * 0.5);
-      const grad = ctx.createRadialGradient(dabX, dabY, 0, dabX, dabY, dabR);
-      grad.addColorStop(0, hexToRgba(hex, 0.82));
-      grad.addColorStop(1, hexToRgba(hex, 0));
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.arc(dabX, dabY, dabR, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    ctx.arc(bx, by, MAGIC_BRUSH_RADIUS_BOX, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
 
-    this._redrawSprite();
-    this.recomputeBlend();
-    return true;
+    this.magicBudget = Math.max(0, this.magicBudget - 1);
+    this.onMagicBudgetChange && this.onMagicBudgetChange(this.magicBudget / this.magicBudgetTotal);
+  }
+
+  _magicStrokeSegment(from, to) {
+    if (!from) { this._stampMagicAt(to.x, to.y); return; }
+    const dist = Math.hypot(to.x - from.x, to.y - from.y);
+    const steps = Math.max(1, Math.ceil(dist / MAGIC_STEP_BOX));
+    for (let i = 1; i <= steps; i++) {
+      if (this.magicBudget <= 0) break;
+      const t = i / steps;
+      this._stampMagicAt(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t);
+    }
   }
 
   // ---- camouflage quality ----
@@ -572,23 +578,12 @@ function hexToRgba(hex, alpha) {
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
 
-function hexToRgb(hex) {
-  const n = parseInt(hex.slice(1), 16);
-  return { r: (n >> 16) & 255, g: (n >> 8) & 255, b: n & 255 };
-}
-
 function rgbToHex({ r, g, b }) {
   return '#' + [r, g, b].map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
 }
 
 function lerpRgb(a, b, t) {
   return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
-}
-
-function jitterHexColor(hex, amount) {
-  const c = hexToRgb(hex);
-  const j = () => (Math.random() * 2 - 1) * amount;
-  return rgbToHex({ r: c.r + j(), g: c.g + j(), b: c.b + j() });
 }
 
 // Shared placement math: given a normalized (nx, ny) anchor, a target

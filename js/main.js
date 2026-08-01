@@ -481,9 +481,11 @@ function ensureEngine() {
     engine.onMagicUsed = (used) => {
       if (!used) return;
       $('tool-magic').disabled = true;
+      $('tool-magic').classList.remove('is-selected');
       $('hide-hint').textContent = 'Закрасься';
       sfx.tap();
     };
+    engine.onMagicBudgetChange = (frac) => updateMagicGauge(frac);
     window.__engine = engine; // debug hook
   }
   return engine;
@@ -571,13 +573,25 @@ $('tool-wheel').addEventListener('click', () => {
 });
 $('wheel-close').addEventListener('click', () => { $('wheel-popover').hidden = true; });
 
+function updateMagicGauge(frac) {
+  const gauge = $('magic-gauge');
+  if (gauge) gauge.style.transform = `scaleX(${Math.max(0, Math.min(1, frac))})`;
+}
+
 $('tool-magic').addEventListener('click', () => {
   if (!engine || !engine.magicAvailable) return;
-  engine.magicArmed = true;
-  engine.eyedropperActive = false;
-  $('tool-eyedropper').classList.remove('is-selected');
-  $('wheel-popover').hidden = true;
-  $('hide-hint').textContent = 'Тапни в трудном для закраски месте';
+  // Sticky, like the eyedropper — stays armed across multiple strokes
+  // until switched off or the budget runs dry, rather than one tap = one use.
+  engine.magicArmed = !engine.magicArmed;
+  $('tool-magic').classList.toggle('is-selected', engine.magicArmed);
+  if (engine.magicArmed) {
+    engine.eyedropperActive = false;
+    $('tool-eyedropper').classList.remove('is-selected');
+    $('wheel-popover').hidden = true;
+    $('hide-hint').textContent = 'Веди пальцем по сложному месту';
+  } else {
+    $('hide-hint').textContent = 'Закрасься';
+  }
   sfx.tap();
 });
 
@@ -606,6 +620,8 @@ async function beginHidePhase(payload) {
   $('tool-eyedropper').classList.remove('is-selected');
   $('tool-magic').hidden = !eng.magicHelperEnabled;
   $('tool-magic').disabled = false;
+  $('tool-magic').classList.remove('is-selected');
+  updateMagicGauge(1);
   await eng.loadPhoto(payload.photoUrl);
   eng.beginPlacement();
 
