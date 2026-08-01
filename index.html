@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="ru" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CutDesk — заявки на видео и аналитика для монтажёров</title>
+<meta name="description" content="Быстрый приём заявок на видеомонтаж и аналитика студии. Работает без сервера, бесплатно, с телефона.">
+<meta name="theme-color" content="#f9f9f7">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+<link rel="stylesheet" href="./assets/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <a class="brand" href="#/"><span class="brand-mark">🎬</span> CutDesk</a>
+  <nav class="nav" id="nav">
+    <a href="#/" data-nav="brief">Заявка</a>
+    <a href="#/board" data-nav="board">Заявки <span class="pill" id="navCount">0</span></a>
+    <a href="#/stats" data-nav="stats">Аналитика</a>
+    <a href="#/settings" data-nav="settings">Настройки</a>
+  </nav>
+  <button class="icon-btn" id="themeBtn" type="button" title="Тема оформления" aria-label="Переключить тему">◐</button>
+</header>
+
+<main id="main">
+
+<!-- ───────────────────────── БРИФ / НОВАЯ ЗАЯВКА ───────────────────────── -->
+<section class="view" data-view="brief">
+  <div class="hero-block">
+    <h1 id="studioTitle">Заявка на монтаж</h1>
+    <p class="lede">Заполните бриф за минуту — эдитор получит все вводные сразу и не будет уточнять их в переписке.</p>
+  </div>
+
+  <div class="card" id="incomingCard" hidden>
+    <div class="card-head"><h2>Входящая заявка по ссылке</h2></div>
+    <div class="card-body">
+      <p class="muted" id="incomingSummary"></p>
+      <div class="row-actions">
+        <button class="btn btn-primary" type="button" id="incomingAdd">Добавить в базу</button>
+        <button class="btn" type="button" id="incomingEdit">Открыть в форме</button>
+        <button class="btn btn-ghost" type="button" id="incomingSkip">Пропустить</button>
+      </div>
+    </div>
+  </div>
+
+  <form class="card" id="briefForm" autocomplete="on">
+    <div class="card-body">
+
+      <fieldset class="fs">
+        <legend>Быстрый пресет</legend>
+        <div class="chips" id="presets"></div>
+      </fieldset>
+
+      <div class="grid-2">
+        <label class="field">
+          <span class="lbl">Заказчик <b class="req">*</b></span>
+          <input name="client" required maxlength="80" placeholder="Имя или название канала">
+        </label>
+        <label class="field">
+          <span class="lbl">Контакт для связи</span>
+          <input name="contact" maxlength="80" placeholder="@telegram или почта">
+        </label>
+        <label class="field field-wide">
+          <span class="lbl">Название проекта <b class="req">*</b></span>
+          <input name="title" required maxlength="120" placeholder="Например: Reels про запуск курса">
+        </label>
+        <label class="field">
+          <span class="lbl">Тип видео</span>
+          <select name="type" id="typeSel"></select>
+        </label>
+        <label class="field">
+          <span class="lbl">Площадка</span>
+          <select name="platform" id="platformSel"></select>
+        </label>
+        <label class="field">
+          <span class="lbl">Хронометраж, сек</span>
+          <input name="durationSec" type="number" min="0" max="36000" step="5" inputmode="numeric" placeholder="60">
+        </label>
+        <label class="field">
+          <span class="lbl">Сколько роликов</span>
+          <input name="qty" type="number" min="1" max="99" step="1" inputmode="numeric" value="1">
+        </label>
+        <label class="field">
+          <span class="lbl">Дедлайн</span>
+          <input name="deadline" type="date">
+        </label>
+        <label class="field">
+          <span class="lbl">Срочность</span>
+          <select name="priority" id="prioritySel"></select>
+        </label>
+        <label class="field">
+          <span class="lbl">Бюджет, <span data-cur>₽</span></span>
+          <input name="budget" type="number" min="0" step="500" inputmode="numeric" placeholder="15000">
+        </label>
+        <label class="field">
+          <span class="lbl">Оценка работы, часов</span>
+          <input name="hours" type="number" min="0" step="0.5" inputmode="decimal" placeholder="6">
+        </label>
+      </div>
+
+      <fieldset class="fs">
+        <legend>Что нужно сделать</legend>
+        <div class="chips" id="works"></div>
+      </fieldset>
+
+      <div class="grid-2">
+        <label class="field field-wide">
+          <span class="lbl">Ссылка на исходники</span>
+          <input name="source" type="url" inputmode="url" placeholder="https://disk.yandex.ru/… или Google Drive">
+        </label>
+        <label class="field field-wide">
+          <span class="lbl">Референсы</span>
+          <input name="refs" maxlength="400" placeholder="Ссылки на похожие ролики через запятую">
+        </label>
+        <label class="field field-wide">
+          <span class="lbl">Комментарий</span>
+          <textarea name="notes" rows="3" maxlength="1200" placeholder="Тон, обязательные кадры, что точно не нужно…"></textarea>
+        </label>
+      </div>
+
+      <div class="row-actions">
+        <button class="btn btn-primary" type="submit">Отправить заявку</button>
+        <button class="btn btn-ghost" type="reset">Очистить</button>
+      </div>
+    </div>
+  </form>
+
+  <div class="card ok-card" id="sentCard" hidden>
+    <div class="card-body">
+      <h2>Заявка создана</h2>
+      <p class="muted" id="sentSummary"></p>
+      <div class="row-actions">
+        <a class="btn btn-primary" id="sendTg" href="#" target="_blank" rel="noopener">Отправить в Telegram</a>
+        <a class="btn" id="sendMail" href="#">Отправить письмом</a>
+        <button class="btn" type="button" id="copyLink">Скопировать ссылку</button>
+        <button class="btn btn-ghost" type="button" id="againBtn">Новая заявка</button>
+      </div>
+      <p class="hint">Ссылка содержит всю заявку целиком — эдитор откроет её и добавит в свою базу одним нажатием.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ───────────────────────────── ЗАЯВКИ ───────────────────────────── -->
+<section class="view" data-view="board">
+  <div class="view-head">
+    <h1>Заявки</h1>
+    <a class="btn btn-primary btn-sm" href="#/">+ Новая</a>
+  </div>
+
+  <div class="filterbar">
+    <div class="chips" id="statusFilter"></div>
+    <input class="search" id="search" type="search" placeholder="Поиск: клиент, проект…" aria-label="Поиск по заявкам">
+    <select id="sortSel" aria-label="Сортировка">
+      <option value="new">Сначала новые</option>
+      <option value="deadline">По дедлайну</option>
+      <option value="budget">По бюджету</option>
+    </select>
+  </div>
+
+  <div class="summary-strip" id="boardSummary"></div>
+  <div id="list" class="list"></div>
+  <p class="empty" id="listEmpty" hidden>Пусто. Создайте заявку или загрузите демо-данные в настройках.</p>
+</section>
+
+<!-- ──────────────────────────── АНАЛИТИКА ──────────────────────────── -->
+<section class="view" data-view="stats">
+  <div class="view-head"><h1>Аналитика</h1></div>
+
+  <div class="filterbar" id="statsFilters">
+    <select id="rangeSel" aria-label="Период">
+      <option value="30">Последние 30 дней</option>
+      <option value="90" selected>Последние 90 дней</option>
+      <option value="180">Последние 180 дней</option>
+      <option value="365">Последний год</option>
+      <option value="all">Всё время</option>
+    </select>
+    <select id="typeFilter" aria-label="Тип видео"><option value="all">Все типы</option></select>
+  </div>
+
+  <section class="card hero-card" aria-labelledby="heroLbl">
+    <div class="card-body">
+      <p class="stat-label" id="heroLbl">Выручка за период</p>
+      <p class="hero-figure" id="heroValue">—</p>
+      <p class="delta" id="heroDelta"></p>
+    </div>
+  </section>
+
+  <div class="tiles" id="tiles"></div>
+
+  <section class="card chart-card" data-chart="dynamics">
+    <div class="card-head">
+      <div>
+        <h2 id="dynTitle">Динамика: заявки</h2>
+        <p class="sub" id="dynSub"></p>
+      </div>
+      <button class="btn btn-ghost btn-sm tbl-toggle" type="button" aria-expanded="false">Таблица</button>
+    </div>
+    <div class="card-body">
+      <div class="seg" id="dynMetric" role="group" aria-label="Показатель"></div>
+      <div class="seg seg-alt" id="dynShape" role="group" aria-label="Тип графика"></div>
+      <div class="chart-body" id="dynChart"></div>
+      <div class="chart-table" hidden></div>
+    </div>
+  </section>
+
+  <div class="grid-charts">
+    <section class="card chart-card" data-chart="mix">
+      <div class="card-head">
+        <div><h2>Типы видео по периодам</h2><p class="sub">Количество заявок</p></div>
+        <button class="btn btn-ghost btn-sm tbl-toggle" type="button" aria-expanded="false">Таблица</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-body" id="mixChart"></div>
+        <div class="legend" id="mixLegend"></div>
+        <div class="chart-table" hidden></div>
+      </div>
+    </section>
+
+    <section class="card chart-card" data-chart="funnel">
+      <div class="card-head">
+        <div><h2>Воронка по стадиям</h2><p class="sub">Где сейчас стоят заявки</p></div>
+        <button class="btn btn-ghost btn-sm tbl-toggle" type="button" aria-expanded="false">Таблица</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-body" id="funnelChart"></div>
+        <div class="chart-table" hidden></div>
+      </div>
+    </section>
+
+    <section class="card chart-card" data-chart="clients">
+      <div class="card-head">
+        <div><h2>Топ клиентов</h2><p class="sub">Выручка по сданным заявкам</p></div>
+        <button class="btn btn-ghost btn-sm tbl-toggle" type="button" aria-expanded="false">Таблица</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-body" id="clientsChart"></div>
+        <div class="chart-table" hidden></div>
+      </div>
+    </section>
+
+    <section class="card chart-card" data-chart="load">
+      <div class="card-head">
+        <div><h2>Загрузка по дням недели</h2><p class="sub">Часы работы по сданным заявкам</p></div>
+        <button class="btn btn-ghost btn-sm tbl-toggle" type="button" aria-expanded="false">Таблица</button>
+      </div>
+      <div class="card-body">
+        <div class="chart-body" id="loadChart"></div>
+        <div class="chart-table" hidden></div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<!-- ──────────────────────────── НАСТРОЙКИ ──────────────────────────── -->
+<section class="view" data-view="settings">
+  <div class="view-head"><h1>Настройки</h1></div>
+
+  <form class="card" id="settingsForm">
+    <div class="card-body">
+      <div class="grid-2">
+        <label class="field">
+          <span class="lbl">Название студии</span>
+          <input name="studio" maxlength="60" placeholder="CutDesk">
+        </label>
+        <label class="field">
+          <span class="lbl">Telegram для заявок</span>
+          <input name="telegram" maxlength="40" placeholder="@username">
+        </label>
+        <label class="field">
+          <span class="lbl">Почта для заявок</span>
+          <input name="email" type="email" placeholder="me@example.com">
+        </label>
+        <label class="field">
+          <span class="lbl">Валюта</span>
+          <input name="currency" maxlength="4" placeholder="₽">
+        </label>
+        <label class="field">
+          <span class="lbl">Ставка, за час</span>
+          <input name="rate" type="number" min="0" step="100" inputmode="numeric" placeholder="1500">
+        </label>
+      </div>
+      <div class="row-actions"><button class="btn btn-primary" type="submit">Сохранить</button></div>
+      <p class="hint">Данные хранятся только в этом браузере — никакого сервера и оплаты. Делайте экспорт, чтобы не потерять базу.</p>
+    </div>
+  </form>
+
+  <div class="card">
+    <div class="card-head"><h2>Данные</h2></div>
+    <div class="card-body">
+      <div class="row-actions">
+        <button class="btn" type="button" id="exportBtn">Экспорт JSON</button>
+        <label class="btn" for="importFile">Импорт JSON</label>
+        <input id="importFile" type="file" accept="application/json,.json" hidden>
+        <button class="btn" type="button" id="demoBtn">Демо-данные</button>
+        <button class="btn btn-danger" type="button" id="wipeBtn">Удалить всё</button>
+      </div>
+      <p class="hint" id="dataStat"></p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>Как выложить сайт с телефона</h2></div>
+    <div class="card-body">
+      <ol class="steps">
+        <li>Откройте репозиторий на GitHub в браузере телефона или в приложении GitHub.</li>
+        <li><b>Settings → Pages → Source: GitHub Actions</b> — включается один раз.</li>
+        <li>Любой коммит в основную ветку публикует сайт автоматически (workflow уже лежит в репозитории).</li>
+        <li>Адрес вида <code>https://ИМЯ.github.io/РЕПО/</code> появится там же, на вкладке Pages.</li>
+      </ol>
+      <p class="hint">Всё бесплатно: GitHub Pages для статики, без базы данных и без бэкенда.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script type="module" src="./assets/app.js"></script>
+</body>
+</html>
