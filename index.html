@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How old are you? — Spin the Wheel</title>
+<style>
+  :root{
+    --bg:#000;
+    --pill-bg:#1c1c1e;
+    --blue:#3a8cff;
+    --hub:#141416;
+    --hub-ring:#5a5a5e;
+    --muted:#6a6a6e;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:#000;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    overflow:hidden;
+  }
+  .stage{
+    position:fixed; inset:0;
+    background:#000;
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+  }
+  .screen{
+    position:relative;
+    width:100%;
+    max-width:430px;
+    height:100%;
+    max-height:932px;
+    margin:auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    color:#fff;
+    user-select:none;
+  }
+
+  /* Question bubble */
+  .question-wrap{
+    margin-top:8%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+  }
+  .emoji-icon{
+    font-size:44px;
+    line-height:1;
+    filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+  }
+  .bubble{
+    background:var(--pill-bg);
+    color:var(--blue);
+    font-weight:700;
+    font-size:23px;
+    padding:12px 22px;
+    border-radius:22px;
+    white-space:nowrap;
+    letter-spacing:.2px;
+  }
+
+  /* Result */
+  .result{
+    margin-top:22px;
+    font-size:40px;
+    font-weight:800;
+    letter-spacing:.5px;
+    min-height:50px;
+    transition:opacity .15s ease;
+  }
+
+  /* Wheel */
+  .wheel-area{
+    position:relative;
+    margin-top:4%;
+    width:94vw;
+    max-width:430px;
+    aspect-ratio:1/1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .wheel-shadow{
+    position:absolute;
+    inset:0;
+    border-radius:50%;
+    box-shadow:0 0 0 6px #0a0a0a, 0 10px 30px rgba(0,0,0,.6);
+  }
+  svg.wheel{
+    width:100%;
+    height:100%;
+    display:block;
+    cursor:pointer;
+    transition:transform 4s cubic-bezier(.17,.67,.2,1.0);
+    transform:rotate(0deg);
+    border-radius:50%;
+  }
+  .wheel-label{
+    fill:#fff;
+    font-weight:700;
+    font-size:15px;
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",Roboto,Helvetica,Arial,sans-serif;
+    paint-order:stroke;
+  }
+  .hub{
+    position:absolute;
+    width:22%;
+    height:22%;
+    border-radius:50%;
+    background:var(--hub);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow:0 3px 8px rgba(0,0,0,.5);
+    pointer-events:none;
+  }
+  .hub::after{
+    content:"";
+    width:52%;
+    height:52%;
+    border-radius:50%;
+    border:3px solid var(--hub-ring);
+  }
+  .pointer{
+    position:absolute;
+    top:6%;
+    width:9%;
+    aspect-ratio:1/1.05;
+    background:var(--hub);
+    clip-path:polygon(50% 0%, 100% 60%, 78% 100%, 22% 100%, 0% 60%);
+    z-index:3;
+    pointer-events:none;
+  }
+
+  /* Progress bar */
+  .progress-wrap{
+    width:88%;
+    max-width:400px;
+    margin-top:5%;
+    margin-bottom:auto;
+    padding-top:14px;
+  }
+  .progress-track{
+    position:relative;
+    width:100%;
+    height:2px;
+    background:#3a3a3c;
+    border-radius:2px;
+  }
+  .progress-dot{
+    position:absolute;
+    top:50%;
+    left:15%;
+    width:12px;
+    height:12px;
+    background:#e6e6e6;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    transition:left .3s ease;
+  }
+
+  /* Bottom controls */
+  .controls{
+    width:92%;
+    max-width:410px;
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .btn-close{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:#1c1c1e;
+    border:none;
+    color:#e6e6e6;
+    font-size:20px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .btn-close:active{ background:#2a2a2c; }
+  .capsule{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:#1c1c1e;
+    border-radius:26px;
+    padding:10px 18px;
+  }
+  .capsule button{
+    background:none;
+    border:none;
+    color:#e6e6e6;
+    font-size:18px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px;
+  }
+  .divider{
+    width:1px;
+    height:18px;
+    background:#48484a;
+  }
+  .speed-btn{
+    font-weight:700;
+    font-size:15px;
+    color:#e6e6e6;
+    background:none;
+    border:none;
+    cursor:pointer;
+  }
+
+  @media (min-height:850px){
+    .question-wrap{ margin-top:70px; }
+    .wheel-area{ margin-top:40px; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="screen">
+
+    <div class="question-wrap">
+      <div class="emoji-icon">👨</div>
+      <div class="bubble">How old are you?</div>
+    </div>
+
+    <div class="result" id="result">11-20</div>
+
+    <div class="wheel-area">
+      <div class="wheel-shadow"></div>
+      <svg class="wheel" id="wheel" viewBox="0 0 300 300"></svg>
+      <div class="pointer"></div>
+      <div class="hub"></div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-dot" id="progressDot"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn-close" id="btnClose" aria-label="Close">&#10005;</button>
+      <div class="capsule">
+        <button id="btnPlay" aria-label="Play/Pause">
+          <svg id="iconPlay" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><rect x="5" y="4" width="5" height="16" rx="1"></rect><rect x="14" y="4" width="5" height="16" rx="1"></rect></svg>
+        </button>
+        <div class="divider"></div>
+        <button class="speed-btn" id="btnSpeed">1x</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var segments = [
+    { label:"11-20", color:"#F5893A" },
+    { label:"1-10",  color:"#E5384C" },
+    { label:"91-100",color:"#EF6E2C" },
+    { label:"81-90", color:"#E5384C" },
+    { label:"71-80", color:"#E63C86" },
+    { label:"61-70", color:"#C93FE0" },
+    { label:"51-60", color:"#8B3FE8" },
+    { label:"41-50", color:"#2E4FE3" },
+    { label:"31-40", color:"#3FA6D8" },
+    { label:"21-30", color:"#7BC142" }
+  ];
+
+  var svgNS = "http://www.w3.org/2000/svg";
+  var wheel = document.getElementById("wheel");
+  var cx = 150, cy = 150, r = 148;
+  var segAngle = 360 / segments.length;
+
+  function toRad(deg){ return (deg - 90) * Math.PI / 180; }
+
+  function polar(cx, cy, radius, angleDeg){
+    var rad = toRad(angleDeg);
+    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+  }
+
+  segments.forEach(function(seg, i){
+    var a0 = i * segAngle;
+    var a1 = (i + 1) * segAngle;
+    var p0 = polar(cx, cy, r, a0);
+    var p1 = polar(cx, cy, r, a1);
+    var largeArc = segAngle > 180 ? 1 : 0;
+
+    var path = document.createElementNS(svgNS, "path");
+    var d = "M " + cx + " " + cy +
+            " L " + p0.x + " " + p0.y +
+            " A " + r + " " + r + " 0 " + largeArc + " 1 " + p1.x + " " + p1.y +
+            " Z";
+    path.setAttribute("d", d);
+    path.setAttribute("fill", seg.color);
+    path.setAttribute("stroke", "#000");
+    path.setAttribute("stroke-width", "1.5");
+    wheel.appendChild(path);
+
+    var mid = a0 + segAngle / 2;
+    var tp = polar(cx, cy, r * 0.6, mid);
+    var text = document.createElementNS(svgNS, "text");
+    text.setAttribute("x", tp.x);
+    text.setAttribute("y", tp.y);
+    text.setAttribute("text-anchor", "middle");
+    text.setAttribute("dominant-baseline", "middle");
+    text.setAttribute("class", "wheel-label");
+    text.setAttribute("transform", "rotate(" + mid + " " + tp.x + " " + tp.y + ")");
+    text.textContent = seg.label;
+    wheel.appendChild(text);
+  });
+
+  var resultEl = document.getElementById("result");
+  var progressDot = document.getElementById("progressDot");
+  var currentRotation = 0;
+  var spinning = false;
+  var speedIndex = 0;
+  var speeds = [1, 2, 0.5];
+  var speedLabels = ["1x", "2x", "0.5x"];
+  var progressPositions = [15, 28, 42, 56, 70, 84, 15];
+  var progressIdx = 0;
+
+  function spin(){
+    if (spinning) return;
+    spinning = true;
+
+    var duration = 4 / speeds[speedIndex];
+    wheel.style.transition = "transform " + duration + "s cubic-bezier(.12,.67,.15,1.0)";
+
+    var extraTurns = 6 + Math.floor(Math.random() * 3);
+    var randomOffset = Math.random() * 360;
+    var target = currentRotation + extraTurns * 360 + randomOffset;
+    currentRotation = target;
+    wheel.style.transform = "rotate(" + target + "deg)";
+
+    setTimeout(function(){
+      spinning = false;
+      var normalized = ((target % 360) + 360) % 360;
+      var pointerAngle = (360 - normalized) % 360;
+      var index = Math.floor(pointerAngle / segAngle) % segments.length;
+      resultEl.style.opacity = 0;
+      setTimeout(function(){
+        resultEl.textContent = segments[index].label;
+        resultEl.style.opacity = 1;
+      }, 150);
+
+      progressIdx = (progressIdx + 1) % progressPositions.length;
+      progressDot.style.left = progressPositions[progressIdx] + "%";
+    }, duration * 1000 + 50);
+  }
+
+  wheel.addEventListener("click", spin);
+
+  var btnPlay = document.getElementById("btnPlay");
+  var iconPlay = document.getElementById("iconPlay");
+  var playing = true;
+  btnPlay.addEventListener("click", function(){
+    playing = !playing;
+    iconPlay.innerHTML = playing
+      ? '<rect x="5" y="4" width="5" height="16" rx="1"></rect><rect x="14" y="4" width="5" height="16" rx="1"></rect>'
+      : '<polygon points="6,4 20,12 6,20"></polygon>';
+  });
+
+  var btnSpeed = document.getElementById("btnSpeed");
+  btnSpeed.addEventListener("click", function(){
+    speedIndex = (speedIndex + 1) % speeds.length;
+    btnSpeed.textContent = speedLabels[speedIndex];
+  });
+
+  document.getElementById("btnClose").addEventListener("click", function(){
+    wheel.style.transition = "none";
+    currentRotation = 0;
+    wheel.style.transform = "rotate(0deg)";
+    resultEl.textContent = segments[0].label;
+    progressIdx = 0;
+    progressDot.style.left = progressPositions[0] + "%";
+  });
+})();
+</script>
+</body>
+</html>
