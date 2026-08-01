@@ -2,7 +2,7 @@ import { Game } from './game.js';
 import {
   PaintEngine, BRUSHES, drawSpriteOnCanvas, isPointInCharacter, spriteRect,
 } from './paint-engine.js';
-import { CHARACTERS } from './shapes.js';
+import { CHARACTERS, drawCharacterGlyph } from './shapes.js';
 import { AVATAR_COLORS } from './palette-data.js';
 import { DEMO_SCENES, paintDemoScene, demoSceneDataUrl } from './demo-scenes.js';
 import { IbisColorWheel } from './color-wheel.js';
@@ -70,7 +70,18 @@ function renderCharacterPicker() {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'character-btn' + (ch.id === playerSettings.character ? ' is-selected' : '');
-    btn.innerHTML = `<span>${ch.emoji}</span><span>${ch.label}</span>`;
+    const selected = ch.id === playerSettings.character;
+    const glyph = document.createElement('canvas');
+    glyph.className = 'character-glyph';
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    glyph.width = Math.round(30 * dpr);
+    glyph.height = Math.round(34 * dpr);
+    drawCharacterGlyph(glyph, ch.id, {
+      fill: selected ? (playerSettings.color || '#ff6b35') : '#6f7480',
+    });
+    const label = document.createElement('span');
+    label.textContent = ch.label;
+    btn.append(glyph, label);
     btn.addEventListener('click', () => {
       playerSettings.character = ch.id;
       savePlayerSettings();
@@ -114,6 +125,7 @@ function renderAvatarSwatches() {
       playerSettings.color = color;
       savePlayerSettings();
       renderAvatarSwatches();
+      renderCharacterPicker(); // the selected silhouette is drawn in your colour
       sfx.tap();
     });
     wrap.appendChild(b);
@@ -328,9 +340,12 @@ function renderPlayers(players) {
     const dot = document.createElement('span');
     dot.className = 'player-dot';
     dot.style.background = p.color;
-    const chr = document.createElement('span');
+    // The actual silhouette, so the lobby shows who is hiding as what —
+    // useful before a round, and consistent with the seeker's wanted list.
+    const chr = document.createElement('canvas');
     chr.className = 'player-char';
-    chr.textContent = (CHARACTERS.find((c) => c.id === p.character) || CHARACTERS[0]).emoji;
+    chr.width = 40; chr.height = 48;
+    drawCharacterGlyph(chr, p.character || 'cat', { fill: p.color || '#fff' });
     const name = document.createElement('span');
     name.textContent = p.name + (p.isHost ? ' 👑' : '');
     li.append(dot, chr, name);
@@ -453,9 +468,11 @@ $('input-photo-file').addEventListener('change', (e) => {
     btn.type = 'button';
     btn.className = 'demo-scene-thumb';
     btn.title = scene.label;
+    // Backing store sized for the largest the tile gets (~110 CSS px at
+    // 2x), so the preview stays crisp instead of being upscaled.
     const c = document.createElement('canvas');
-    c.width = 62; c.height = 62;
-    paintDemoScene(c.getContext('2d'), 62, 62, scene.id);
+    c.width = 220; c.height = 220;
+    paintDemoScene(c.getContext('2d'), c.width, c.height, scene.id);
     btn.appendChild(c);
     btn.addEventListener('click', () => {
       document.querySelectorAll('.demo-scene-thumb').forEach((t) => t.classList.remove('is-selected'));
@@ -854,6 +871,7 @@ async function beginSeekPhase(payload) {
 
   showScreen('screen-seek');
   $('seek-hint').textContent = 'Тапай по фото';
+  renderWantedRow(payload.sprites);
   $('seek-found-count').textContent = `Найдено: 0 / ${payload.sprites.length}`;
   $('taps-value').textContent = String(payload.tapsAllowed);
   $('taps-value').classList.remove('is-low');
@@ -871,6 +889,38 @@ async function beginSeekPhase(payload) {
   fitSeekCanvas(seekImage);
   redrawSeekCanvas();
   checkSeekDeadline();
+}
+
+// Show the seeker which silhouettes are hidden in this photo. Knowing
+// you're hunting a bunny and a pedestrian — without any clue where they
+// are — is what makes the search a skill rather than a lottery.
+function renderWantedRow(sprites) {
+  const row = $('wanted-row');
+  row.innerHTML = '';
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  for (const s of sprites) {
+    const card = document.createElement('div');
+    card.className = 'wanted-card';
+    card.dataset.playerId = s.playerId;
+
+    const glyph = document.createElement('canvas');
+    glyph.className = 'wanted-glyph';
+    glyph.width = Math.round(26 * dpr);
+    glyph.height = Math.round(30 * dpr);
+    drawCharacterGlyph(glyph, s.character, { fill: s.color || '#fff' });
+
+    const name = document.createElement('span');
+    name.className = 'wanted-name';
+    name.textContent = s.name;
+
+    card.append(glyph, name);
+    row.appendChild(card);
+  }
+}
+
+function markWantedFound(playerId) {
+  const card = document.querySelector(`#wanted-row .wanted-card[data-player-id="${playerId}"]`);
+  if (card) card.classList.add('is-found');
 }
 
 function redrawSeekCanvas() {
@@ -983,6 +1033,7 @@ game.on('seek-event', ({ targetPlayerId, hit, tapsLeft }) => {
     sfx.miss();
   }
   if (amSeeker) {
+    if (hit && targetPlayerId) markWantedFound(targetPlayerId);
     $('seek-found-count').textContent = `Найдено: ${seekFoundIds.size} / ${currentSeekSprites.length}`;
     $('taps-value').textContent = String(tapsLeft);
     $('taps-value').classList.toggle('is-low', tapsLeft <= 2);

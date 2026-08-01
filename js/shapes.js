@@ -146,6 +146,23 @@ export const CHARACTERS = [
   { id: 'sign', label: 'Пешеход', emoji: '🚸', build: buildSignPerson },
 ];
 
+// Draw a character's silhouette into a small canvas, scaled to fit and
+// centred. Used anywhere a player needs to recognise a shape rather than
+// read its name: the menu picker and the seeker's wanted list.
+export function drawCharacterGlyph(canvas, id, { fill = '#fff', pad = 0.08 } = {}) {
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width, h = canvas.height;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+  const k = Math.min(w / CHAR_BOX.w, h / CHAR_BOX.h) * (1 - pad * 2);
+  ctx.save();
+  ctx.translate((w - CHAR_BOX.w * k) / 2, (h - CHAR_BOX.h * k) / 2);
+  ctx.scale(k, k);
+  ctx.fillStyle = fill;
+  ctx.fill(getCharacterPath(id));
+  ctx.restore();
+}
+
 const cache = new Map();
 
 export function getCharacterPath(id) {
