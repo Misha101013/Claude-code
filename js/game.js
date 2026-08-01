@@ -1,5 +1,5 @@
 import { Net } from './net.js';
-import { sanitizeMatchSettings, matchSettings, tapsForHiderCount, roundsForPlayerCount } from './settings.js';
+import { sanitizeMatchSettings, matchSettings, playerSettings, tapsForHiderCount, roundsForPlayerCount } from './settings.js';
 
 // Fractions of the seek clock at which a struggling seeker gets a hint.
 // Later and wider than before: a hint only helps someone who's found
@@ -235,7 +235,8 @@ export class Game {
   hostStartRound(photoDataUrl) {
     if (!this.isHost) return;
     const ids = this._playersArray().map((p) => p.id);
-    if (ids.length < 2) return;
+    const minPlayers = playerSettings.testMode ? 1 : 2;
+    if (ids.length < minPlayers) return;
 
     if (!this.match) {
       this.match = {
@@ -246,22 +247,32 @@ export class Game {
       for (const p of this.players.values()) p.totalScore = 0;
     }
 
-    // Random rather than join order, but still fair: everyone still gets
-    // exactly one turn before anybody repeats (the pool reopens once it's
-    // empty). Anyone who's raised their hand for this round jumps the
-    // queue — picked at random if more than one volunteers — otherwise
-    // it's a random draw from whoever hasn't sought yet.
-    let pool = ids.filter((id) => !this.match.seekerHistory.includes(id));
-    if (pool.length === 0) { this.match.seekerHistory = []; pool = ids.slice(); }
-    const volunteers = pool.filter((id) => {
-      const p = this.players.get(id);
-      return p && p.wantsSeeker;
-    });
-    const chooseFrom = volunteers.length ? volunteers : pool;
-    const seekerId = chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
-    this.match.seekerHistory.push(seekerId);
-    const chosen = this.players.get(seekerId);
-    if (chosen) chosen.wantsSeeker = false;
+    let seekerId;
+    if (ids.length === 1) {
+      // Solo test round: nobody to rotate through. You hide by default —
+      // only pressing "I want to seek" flips you to the seeker instead,
+      // and then there's nobody left to hide from you.
+      const solo = this.players.get(ids[0]);
+      seekerId = solo && solo.wantsSeeker ? ids[0] : null;
+      if (solo) solo.wantsSeeker = false;
+    } else {
+      // Random rather than join order, but still fair: everyone still gets
+      // exactly one turn before anybody repeats (the pool reopens once it's
+      // empty). Anyone who's raised their hand for this round jumps the
+      // queue — picked at random if more than one volunteers — otherwise
+      // it's a random draw from whoever hasn't sought yet.
+      let pool = ids.filter((id) => !this.match.seekerHistory.includes(id));
+      if (pool.length === 0) { this.match.seekerHistory = []; pool = ids.slice(); }
+      const volunteers = pool.filter((id) => {
+        const p = this.players.get(id);
+        return p && p.wantsSeeker;
+      });
+      const chooseFrom = volunteers.length ? volunteers : pool;
+      seekerId = chooseFrom[Math.floor(Math.random() * chooseFrom.length)];
+      this.match.seekerHistory.push(seekerId);
+      const chosen = this.players.get(seekerId);
+      if (chosen) chosen.wantsSeeker = false;
+    }
     this._broadcastPlayers();
 
     const payload = {
@@ -282,6 +293,9 @@ export class Game {
       () => this._hostFinishHidePhase(),
       this.settings.hideSeconds * 1000 + 2500,
     );
+    // A solo seeker (test mode) has zero hiders to wait for — wrap up
+    // immediately instead of sitting through the full hide timer.
+    this._hostCheckHideComplete();
   }
 
   _applyRoundStart(payload) {
@@ -398,6 +412,18 @@ export class Game {
       this.round.seekStartedAt = Date.now();
       this.round.tapsAllowed = 0;
       this._hostEndRound('no-hiders');
+      return;
+    }
+
+    // Solo test-mode round with nobody seeking (this.round.seekerId is
+    // null): there's nobody to wait for either, so wrap up immediately
+    // instead of sitting through a seek timer that will never resolve.
+    if (this.round.seekerId == null) {
+      this.phase = 'seek';
+      this.round.spriteList = sprites;
+      this.round.seekStartedAt = Date.now();
+      this.round.tapsAllowed = 0;
+      this._hostEndRound('solo-test');
       return;
     }
 
@@ -538,19 +564,23 @@ export class Game {
       });
     }
 
-    const findTimes = live
-      .map((s) => this.round.found[s.playerId])
-      .filter((t) => t != null);
-    const seekParts = seekerScore({
-      findTimes, hiderCount: live.length, seekSeconds,
-      tapsLeft: Math.max(0, this.round.tapsAllowed - this.round.taps),
-    });
-    rows.push({
-      playerId: this.round.seekerId, name: this.playerName(this.round.seekerId),
-      role: 'seeker', finds: findTimes.length, hiderCount: live.length,
-      tapsUsed: this.round.taps, tapsAllowed: this.round.tapsAllowed,
-      parts: seekParts, points: seekParts.total,
-    });
+    // Solo test rounds with nobody volunteering to seek have no seeker at
+    // all (this.round.seekerId is null) — nothing to score, so no row.
+    if (this.round.seekerId != null) {
+      const findTimes = live
+        .map((s) => this.round.found[s.playerId])
+        .filter((t) => t != null);
+      const seekParts = seekerScore({
+        findTimes, hiderCount: live.length, seekSeconds,
+        tapsLeft: Math.max(0, this.round.tapsAllowed - this.round.taps),
+      });
+      rows.push({
+        playerId: this.round.seekerId, name: this.playerName(this.round.seekerId),
+        role: 'seeker', finds: findTimes.length, hiderCount: live.length,
+        tapsUsed: this.round.taps, tapsAllowed: this.round.tapsAllowed,
+        parts: seekParts, points: seekParts.total,
+      });
+    }
 
     for (const row of rows) {
       const p = this.players.get(row.playerId);

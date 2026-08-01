@@ -68,6 +68,7 @@ export const PLAYER_DEFAULTS = {
   character: 'cat',
   size: 'medium',
   sound: true,
+  testMode: false,
 };
 
 // A per-player choice, not a match setting — everyone picks their own.

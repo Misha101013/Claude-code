@@ -202,6 +202,13 @@ $('toggle-sound').addEventListener('click', () => {
   if (playerSettings.sound) { unlockAudio(); sfx.tap(); }
 });
 
+$('toggle-test-mode').addEventListener('click', () => {
+  playerSettings.testMode = !playerSettings.testMode;
+  savePlayerSettings();
+  $('toggle-test-mode').setAttribute('aria-checked', String(playerSettings.testMode));
+  sfx.tap();
+});
+
 $('btn-reset-match-settings').addEventListener('click', () => {
   Object.assign(matchSettings, MATCH_DEFAULTS);
   saveMatchSettings();
@@ -211,6 +218,7 @@ $('btn-reset-match-settings').addEventListener('click', () => {
 
 function renderSettings() {
   $('toggle-sound').setAttribute('aria-checked', String(playerSettings.sound));
+  $('toggle-test-mode').setAttribute('aria-checked', String(playerSettings.testMode));
   const list = $('match-settings-list');
   list.innerHTML = '';
 
@@ -346,7 +354,7 @@ function renderPlayers(players) {
     }
     ul.appendChild(li);
   }
-  $('btn-start-round').disabled = !(selectedPhotoUrl && players.length >= 2);
+  $('btn-start-round').disabled = !(selectedPhotoUrl && players.length >= minPlayersToStart());
   updateVolunteerButton();
 }
 
@@ -402,11 +410,13 @@ $('btn-volunteer-seeker').addEventListener('click', () => {
 $('btn-match-leave').addEventListener('click', leaveRoom);
 $('btn-edit-rules').addEventListener('click', () => openSettings('screen-lobby'));
 
+function minPlayersToStart() { return playerSettings.testMode ? 1 : 2; }
+
 function setSelectedPhoto(url) {
   selectedPhotoUrl = url;
   $('photo-preview').src = url;
   $('photo-preview').hidden = false;
-  $('btn-start-round').disabled = !(selectedPhotoUrl && game.players.size >= 2);
+  $('btn-start-round').disabled = !(selectedPhotoUrl && game.players.size >= minPlayersToStart());
 }
 
 $('btn-upload-photo').addEventListener('click', () => $('input-photo-file').click());
@@ -1003,6 +1013,7 @@ const REASON_TEXT = {
   'out-of-taps': 'У искателя закончились попытки.',
   'time': 'Время вышло.',
   'no-hiders': 'Никто не успел спрятаться — раунд не считается.',
+  'solo-test': 'Тестовый раунд в одиночку — искать было некому.',
 };
 
 game.on('round-ended', (payload) => {
