@@ -433,6 +433,7 @@ function ensureEngine() {
       $('hide-hint').textContent = 'Закрасься';
       sfx.tap();
     };
+    window.__engine = engine; // debug hook
   }
   return engine;
 }

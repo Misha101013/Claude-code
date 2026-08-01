@@ -38,10 +38,15 @@ export const BRUSHES = [
   { id: 'smudge', label: '👆', title: 'Палец — растушёвывает и тянет цвета друг в друга' },
 ];
 
-// Once-per-round helper: 22 jittered, semi-transparent dabs scattered
-// through the circle. Deliberately imprecise — an assist, not a cheat.
-const MAGIC_DABS = 22;
-const MAGIC_RADIUS_BOX = 15; // box units
+// Once-per-round helper: a big circle filled with many small soft dabs,
+// each one sampling the real photo at its OWN position (not a single
+// shared blur), so the patch actually tracks local detail — a brick
+// edge, a leaf, a shadow — instead of smearing the area into one flat
+// average. Still visibly brushed, not a pasted photo crop: every dab is
+// a soft, semi-transparent, lightly jittered circle, not a hard pixel copy.
+const MAGIC_RADIUS_BOX = 26; // box units — big enough to cover most of a limb
+const MAGIC_DAB_RADIUS_BOX = 3.2;
+const MAGIC_COVERAGE = 3.0; // expected dab-area-over-circle-area multiple; ~95% coverage
 
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
@@ -440,21 +445,6 @@ export class PaintEngine {
 
     const r = this.spriteScreenRect();
     const k = this.k;
-    const cx = r.x + boxX * k;
-    const cy = r.y + boxY * k;
-    const sampleSpreadPx = Math.max(4, MAGIC_RADIUS_BOX * k * 0.5);
-
-    // Average a ring of samples so one stray pixel (a leaf, a highlight)
-    // can't dominate the whole patch.
-    const samples = [this.sampleColorAt(cx, cy)];
-    for (let i = 0; i < 6; i++) {
-      const ang = (i / 6) * Math.PI * 2;
-      samples.push(this.sampleColorAt(
-        cx + Math.cos(ang) * sampleSpreadPx,
-        cy + Math.sin(ang) * sampleSpreadPx,
-      ));
-    }
-    const base = averageHexColors(samples);
 
     this._pushUndo();
     const ctx = this.offCtx;
@@ -463,18 +453,30 @@ export class PaintEngine {
     ctx.beginPath();
     ctx.arc(boxX, boxY, MAGIC_RADIUS_BOX, 0, Math.PI * 2);
     ctx.clip();
-    // Deliberately imprecise: a scatter of soft, jittered dabs, not a
-    // flat perfect fill — a helper, not a cheat, and never a substitute
-    // for actually matching the photo by eye.
-    for (let i = 0; i < MAGIC_DABS; i++) {
+
+    // Many small dabs, each sampling the photo at its OWN position —
+    // that's what makes the patch track real local detail (a mortar
+    // line, a leaf edge, a shadow) instead of smearing everything into
+    // one flat blur. Random (not grid) placement plus soft gradient
+    // edges and a light per-dab jitter keep it reading as hand-brushed
+    // rather than a pasted-in photo crop.
+    const area = Math.PI * MAGIC_RADIUS_BOX * MAGIC_RADIUS_BOX;
+    const dabArea = Math.PI * MAGIC_DAB_RADIUS_BOX * MAGIC_DAB_RADIUS_BOX;
+    const dabCount = Math.round((area / dabArea) * MAGIC_COVERAGE);
+
+    for (let i = 0; i < dabCount; i++) {
       const ang = Math.random() * Math.PI * 2;
       const dist = Math.sqrt(Math.random()) * MAGIC_RADIUS_BOX;
       const dabX = boxX + Math.cos(ang) * dist;
       const dabY = boxY + Math.sin(ang) * dist;
-      const dabR = MAGIC_RADIUS_BOX * (0.4 + Math.random() * 0.3);
-      const hex = jitterHexColor(base, 20);
+
+      const canvasX = r.x + dabX * k;
+      const canvasY = r.y + dabY * k;
+      const hex = jitterHexColor(this.sampleColorAt(canvasX, canvasY), 7);
+
+      const dabR = MAGIC_DAB_RADIUS_BOX * (0.75 + Math.random() * 0.5);
       const grad = ctx.createRadialGradient(dabX, dabY, 0, dabX, dabY, dabR);
-      grad.addColorStop(0, hexToRgba(hex, 0.55));
+      grad.addColorStop(0, hexToRgba(hex, 0.82));
       grad.addColorStop(1, hexToRgba(hex, 0));
       ctx.fillStyle = grad;
       ctx.beginPath();
@@ -534,15 +536,6 @@ function rgbToHex({ r, g, b }) {
 
 function lerpRgb(a, b, t) {
   return { r: a.r + (b.r - a.r) * t, g: a.g + (b.g - a.g) * t, b: a.b + (b.b - a.b) * t };
-}
-
-function averageHexColors(hexes) {
-  const sum = { r: 0, g: 0, b: 0 };
-  for (const hex of hexes) {
-    const c = hexToRgb(hex);
-    sum.r += c.r; sum.g += c.g; sum.b += c.b;
-  }
-  return rgbToHex({ r: sum.r / hexes.length, g: sum.g / hexes.length, b: sum.b / hexes.length });
 }
 
 function jitterHexColor(hex, amount) {
