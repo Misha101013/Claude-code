@@ -204,9 +204,9 @@ body.body--full .app-shell { padding: 0; }
   font-family: var(--font-display);
 }
 
-.character-picker { display: flex; gap: 9px; }
+.character-picker { display: flex; flex-wrap: wrap; gap: 9px; }
 .character-btn {
-  flex: 1;
+  flex: 1 1 calc(33.333% - 6px);
   background: var(--ink);
   border: 2px solid var(--ink-line);
   border-radius: var(--radius-sm);
@@ -219,6 +219,22 @@ body.body--full .app-shell { padding: 0; }
 .character-btn span:first-child { font-size: 1.5rem; }
 .character-btn span:last-child { font-size: .66rem; font-weight: 700; }
 .character-btn.is-selected { border-color: var(--accent); color: var(--paper); }
+
+.size-picker { display: flex; gap: 9px; }
+.size-btn {
+  flex: 1;
+  background: var(--ink);
+  border: 2px solid var(--ink-line);
+  border-radius: var(--radius-sm);
+  padding: 10px 4px;
+  cursor: pointer;
+  color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  transition: border-color .15s ease, color .15s ease;
+}
+.size-btn-dot { border-radius: 50%; background: currentColor; }
+.size-btn span:last-child { font-size: .74rem; font-weight: 700; }
+.size-btn.is-selected { border-color: var(--accent-2); color: var(--paper); }
 
 .avatar-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 .avatar-swatch {

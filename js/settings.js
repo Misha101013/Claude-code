@@ -14,7 +14,6 @@ export const MATCH_DEFAULTS = {
   tapsPerHider: 3,
   hints: true,
   blendMeter: true,
-  charScale: 1,
   autoFillHelper: false,
   showHiders: false,
 };
@@ -46,13 +45,8 @@ export const MATCH_FIELDS = [
     min: 1, max: 6, step: 1, format: (v) => '+' + v,
   },
   {
-    key: 'charScale', label: 'Размер персонажа', type: 'range',
-    min: 0.6, max: 1.6, step: 0.1,
-    format: (v) => Math.round(v * 100) + '%',
-  },
-  {
     key: 'hints', label: 'Подсказки искателю', type: 'toggle',
-    hint: 'Если время идёт, а никого не нашли — покажем сужающийся круг.',
+    hint: 'Если долго не находит вообще никого — под конец покажем неточный, широкий круг. Как только есть хоть одна находка, подсказки больше не будет.',
   },
   {
     key: 'blendMeter', label: 'Показывать качество маскировки', type: 'toggle',
@@ -72,8 +66,26 @@ export const PLAYER_DEFAULTS = {
   name: '',
   color: null, // picked at random on first run
   character: 'cat',
+  size: 'medium',
   sound: true,
 };
+
+// A per-player choice, not a match setting — everyone picks their own.
+// Deliberately a narrow band (small vs large is only a ~27% spread) so
+// it's a small tactical nudge rather than a dominant "always go tiny"
+// strategy: a smaller character is a little easier to blend and a
+// little easier to miss, but nowhere near enough to make size the whole
+// game the way a wide range would.
+export const SIZE_PRESETS = [
+  { id: 'small', label: 'Маленький', dotSize: 10, scale: 0.88 },
+  { id: 'medium', label: 'Средний', dotSize: 15, scale: 1 },
+  { id: 'large', label: 'Крупный', dotSize: 20, scale: 1.12 },
+];
+
+export function sizeScale(id) {
+  const preset = SIZE_PRESETS.find((s) => s.id === id);
+  return preset ? preset.scale : 1;
+}
 
 const MATCH_KEY = 'blendin-match-v2';
 const PLAYER_KEY = 'blendin-player-v2';

@@ -10,7 +10,7 @@ import { ZoomController } from './zoom.js';
 import { blendLabel } from './blend.js';
 import {
   MATCH_FIELDS, MATCH_DEFAULTS, matchSettings, playerSettings,
-  saveMatchSettings, savePlayerSettings, tapsForHiderCount,
+  saveMatchSettings, savePlayerSettings, tapsForHiderCount, SIZE_PRESETS, sizeScale,
 } from './settings.js';
 import { sfx, setSoundEnabled, unlockAudio } from './audio.js';
 
@@ -82,6 +82,26 @@ function renderCharacterPicker() {
   }
 }
 
+function renderSizePicker() {
+  const wrap = $('size-picker');
+  wrap.innerHTML = '';
+  for (const preset of SIZE_PRESETS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'size-btn' + (preset.id === playerSettings.size ? ' is-selected' : '');
+    btn.innerHTML =
+      `<span class="size-btn-dot" style="width:${preset.dotSize}px;height:${preset.dotSize}px"></span>` +
+      `<span>${preset.label}</span>`;
+    btn.addEventListener('click', () => {
+      playerSettings.size = preset.id;
+      savePlayerSettings();
+      renderSizePicker();
+      sfx.tap();
+    });
+    wrap.appendChild(btn);
+  }
+}
+
 function renderAvatarSwatches() {
   const wrap = $('avatar-swatches');
   wrap.innerHTML = '';
@@ -102,6 +122,7 @@ function renderAvatarSwatches() {
 
 $('input-nickname').value = playerSettings.name || '';
 renderCharacterPicker();
+renderSizePicker();
 renderAvatarSwatches();
 $('brand-mark').textContent =
   (CHARACTERS.find((c) => c.id === playerSettings.character) || CHARACTERS[0]).emoji;
@@ -555,7 +576,7 @@ async function beginHidePhase(payload) {
 
   const eng = ensureEngine();
   eng.setCharacter(playerSettings.character);
-  eng.setCharScale(game.settings.charScale);
+  eng.setCharScale(sizeScale(playerSettings.size));
   eng.eyedropperActive = false;
   eng.magicHelperEnabled = !!game.settings.autoFillHelper;
   $('tool-eyedropper').classList.remove('is-selected');

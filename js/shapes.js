@@ -93,6 +93,30 @@ function buildBunny() {
   return p;
 }
 
+function buildSquarePerson() {
+  const p = new Path2D();
+  roundRect(p, 33, 3, 34, 30, 0); // head
+  roundRect(p, 25, 34, 50, 52, 0); // torso
+  roundRect(p, 9, 38, 15, 42, 0); // left arm
+  roundRect(p, 76, 38, 15, 42, 0); // right arm
+  roundRect(p, 29, 88, 18, 48, 0); // left leg
+  roundRect(p, 53, 88, 18, 48, 0); // right leg
+  return p;
+}
+
+// The classic pedestrian pictogram from crossing signs: a round head and
+// a soft pill-shaped body, everything heavily rounded.
+function buildSignPerson() {
+  const p = new Path2D();
+  ellipse(p, 50, 19, 15, 15); // head
+  roundRect(p, 30, 32, 40, 54, 19); // torso
+  roundRect(p, 11, 40, 15, 38, 7); // left arm
+  roundRect(p, 74, 40, 15, 38, 7); // right arm
+  roundRect(p, 29, 84, 17, 48, 8); // left leg
+  roundRect(p, 54, 84, 17, 48, 8); // right leg
+  return p;
+}
+
 function buildBlob() {
   const p = new Path2D();
   ellipse(p, 50, 30, 26, 26);
@@ -118,6 +142,8 @@ export const CHARACTERS = [
   { id: 'chameleon', label: 'Хамелеон', emoji: '🦎', build: buildChameleon },
   { id: 'bunny', label: 'Зайчик', emoji: '🐰', build: buildBunny },
   { id: 'blob', label: 'Человечек', emoji: '🧍', build: buildBlob },
+  { id: 'square', label: 'Кубик', emoji: '🧊', build: buildSquarePerson },
+  { id: 'sign', label: 'Пешеход', emoji: '🚸', build: buildSignPerson },
 ];
 
 const cache = new Map();

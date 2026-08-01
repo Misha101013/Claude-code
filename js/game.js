@@ -2,7 +2,10 @@ import { Net } from './net.js';
 import { sanitizeMatchSettings, matchSettings, tapsForHiderCount, roundsForPlayerCount } from './settings.js';
 
 // Fractions of the seek clock at which a struggling seeker gets a hint.
-const HINT_AT = [0.55, 0.8];
+// Later and wider than before: a hint only helps someone who's found
+// nobody at all, and even then it's a broad, imprecise circle rather
+// than a real lead.
+const HINT_AT = [0.7, 0.88];
 
 // ---------------------------------------------------------------------
 // Scoring
@@ -452,13 +455,16 @@ export class Game {
 
   _hostSendHint(level) {
     if (!this.round || this.phase !== 'seek') return;
+    // Once the seeker has found even one hider, they're no longer
+    // "struggling" — no more hand-holding for the rest of the round.
+    if (Object.keys(this.round.found).length > 0) return;
     const unfound = (this.round.spriteList || [])
       .filter((s) => this.round.found[s.playerId] == null && this.players.has(s.playerId));
     if (unfound.length === 0) return;
     const target = unfound[Math.floor(Math.random() * unfound.length)];
     // Jitter the centre so the hint narrows the search without handing
-    // over the exact pixel.
-    const radiusFrac = level === 0 ? 0.3 : 0.18;
+    // over the exact pixel. Radii are intentionally wide/imprecise.
+    const radiusFrac = level === 0 ? 0.42 : 0.3;
     const jitter = radiusFrac * 0.45;
     const payload = {
       nx: Math.max(0.05, Math.min(0.95, target.nx + (Math.random() * 2 - 1) * jitter)),
