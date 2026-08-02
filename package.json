@@ -1,0 +1,27 @@
+{
+  "name": "market-tycoon",
+  "version": "1.0.0",
+  "description": "Кооперативный 3D-симулятор супермаркета в браузере (мультиплеер)",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "sim": "node tools/simulate.mjs",
+    "e2e": "node tools/e2e.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://local_proxy@127.0.0.1:41729/git/Misha101013/Claude-code"
+  },
+  "keywords": ["game", "supermarket", "simulator", "multiplayer", "threejs", "websocket"],
+  "license": "MIT",
+  "dependencies": {
+    "express": "^5.2.1",
+    "three": "^0.185.1",
+    "ws": "^8.21.1"
+  }
+}

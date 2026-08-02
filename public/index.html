@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Маркет Тайкун — 3D мультиплеер супермаркет</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛒</text></svg>" />
+<link rel="stylesheet" href="/styles.css" />
+<script type="importmap">
+{ "imports": { "three": "/vendor/three.module.js" } }
+</script>
+</head>
+<body>
+
+<!-- ============ Стартовый экран ============ -->
+<div id="splash" class="screen">
+  <div class="splash-card">
+    <h1>🛒 МАРКЕТ ТАЙКУН</h1>
+    <p class="tagline">Кооперативный симулятор супермаркета в 3D. Закупай, выкладывай, торгуй — вдвоём, втроём, вдесятером.</p>
+
+    <div class="form">
+      <label>Твоё имя
+        <input id="nameInput" maxlength="18" placeholder="Менеджер" autocomplete="off" />
+      </label>
+      <label>Код магазина <span class="hint">(один код = один общий магазин)</span>
+        <input id="roomInput" maxlength="8" placeholder="MAIN" autocomplete="off" />
+      </label>
+      <button id="playBtn" class="primary">Войти в смену</button>
+    </div>
+
+    <div class="rooms">
+      <div class="rooms-head">
+        <span>Активные магазины</span>
+        <button id="refreshRooms" class="link">обновить</button>
+      </div>
+      <div id="roomList" class="room-list"><span class="muted">загрузка…</span></div>
+    </div>
+
+    <div class="controls-help">
+      <b>Управление:</b>
+      <span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> ходьба</span>
+      <span><kbd>Shift</kbd> бег</span>
+      <span><kbd>E</kbd> действие</span>
+      <span><kbd>F</kbd> бросить коробку</span>
+      <span><kbd>Tab</kbd> ноутбук</span>
+      <span><kbd>T</kbd> чат</span>
+      <span><kbd>M</kbd> карта</span>
+      <span><kbd>Esc</kbd> меню</span>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Игра ============ -->
+<div id="game" class="hidden">
+  <canvas id="canvas"></canvas>
+
+  <!-- HUD -->
+  <div id="hud">
+    <div class="hud-top-left">
+      <div class="pill money"><span class="ic">💵</span><b id="hudMoney">$0</b></div>
+      <div class="pill"><span class="ic">📅</span>День <b id="hudDay">1</b> · <b id="hudClock">08:00</b>
+        <span id="hudOpen" class="badge closed">ЗАКРЫТ</span>
+      </div>
+      <div class="pill"><span class="ic">⭐</span><b id="hudRating">3.0</b>
+        <span id="hudStars" class="stars"></span>
+      </div>
+      <div class="pill level">
+        <span class="ic">🏆</span>Ур.<b id="hudLevel">1</b>
+        <span class="xpbar"><i id="hudXp"></i></span>
+      </div>
+      <div id="hudDelivery" class="pill delivery hidden"><span class="ic">🚚</span><span id="hudDeliveryText"></span></div>
+      <div id="hudTask" class="pill task"><span class="ic">🎯</span><span id="hudTaskText"></span></div>
+    </div>
+
+    <div class="hud-top-right">
+      <div id="playerList" class="panel"></div>
+      <canvas id="minimap" width="220" height="220"></canvas>
+    </div>
+
+    <div id="crosshair"></div>
+    <div id="prompt" class="hidden"></div>
+
+    <div class="hud-bottom-left">
+      <div id="chatLog"></div>
+      <input id="chatInput" class="hidden" maxlength="160" placeholder="Сообщение… (Enter — отправить, Esc — отмена)" />
+    </div>
+
+    <div class="hud-bottom-right">
+      <div id="held" class="held hidden"></div>
+      <div id="restockBar" class="restock hidden"><i></i></div>
+    </div>
+
+    <div id="toasts"></div>
+  </div>
+
+  <!-- Ноутбук -->
+  <div id="laptop" class="modal hidden">
+    <div class="modal-box laptop-box">
+      <div class="modal-head">
+        <div class="tabs">
+          <button data-tab="order" class="tab active">📦 Заказ</button>
+          <button data-tab="price" class="tab">🏷️ Цены</button>
+          <button data-tab="shop" class="tab">🛠️ Магазин</button>
+          <button data-tab="staff" class="tab">🧑‍💼 Персонал</button>
+          <button data-tab="stats" class="tab">📈 Отчёт</button>
+        </div>
+        <button id="laptopClose" class="close">✕</button>
+      </div>
+      <div class="modal-body">
+        <div id="tab-order" class="tab-panel"></div>
+        <div id="tab-price" class="tab-panel hidden"></div>
+        <div id="tab-shop" class="tab-panel hidden"></div>
+        <div id="tab-staff" class="tab-panel hidden"></div>
+        <div id="tab-stats" class="tab-panel hidden"></div>
+      </div>
+      <div class="modal-foot">
+        <div id="cartInfo" class="muted">Корзина пуста</div>
+        <button id="orderBtn" class="primary" disabled>Заказать</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Пауза / помощь -->
+  <div id="pause" class="modal hidden">
+    <div class="modal-box">
+      <h2>Пауза</h2>
+      <div class="help-grid">
+        <div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div><div>Ходьба</div>
+        <div><kbd>Shift</kbd></div><div>Бег</div>
+        <div><kbd>E</kbd></div><div>Взять коробку / выложить товар (удерживать) / пробить чек</div>
+        <div><kbd>F</kbd></div><div>Бросить коробку</div>
+        <div><kbd>Tab</kbd></div><div>Ноутбук (у стола на складе)</div>
+        <div><kbd>T</kbd></div><div>Чат</div>
+        <div><kbd>M</kbd></div><div>Показать/скрыть карту</div>
+        <div><kbd>Esc</kbd></div><div>Это меню</div>
+      </div>
+      <p class="muted small">Как играть: закажи товар на ноутбуке → дождись фуры на складе → бери коробки и выкладывай на стеллажи → выставь цены → включи рубильник у входа → пробивай покупателей на кассе.</p>
+      <button id="resumeBtn" class="primary">Продолжить</button>
+    </div>
+  </div>
+
+  <!-- Итоги дня -->
+  <div id="summary" class="modal hidden">
+    <div class="modal-box">
+      <h2 id="summaryTitle">Итоги дня</h2>
+      <div id="summaryBody"></div>
+      <button id="summaryClose" class="primary">Дальше</button>
+    </div>
+  </div>
+
+  <div id="disconnected" class="modal hidden">
+    <div class="modal-box">
+      <h2>Соединение потеряно</h2>
+      <p class="muted">Сервер недоступен или смена завершена.</p>
+      <button onclick="location.reload()" class="primary">Переподключиться</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>
