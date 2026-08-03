@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#15161a">
+<meta name="description" content="Покадровая ротоскоп-анимация в браузере: загрузите видео, нарежьте на кадры, обведите каждый кадр и экспортируйте GIF или PNG.">
+<title>Ротоскоп — покадровая анимация по видео</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎞️</text></svg>">
+</head>
+<body>
+
+<header class="steps" id="steps">
+  <button class="step is-active" data-goto="1"><span class="num">1</span><span class="lbl">Видео</span></button>
+  <button class="step" data-goto="2" disabled><span class="num">2</span><span class="lbl">Кадры</span></button>
+  <button class="step" data-goto="3" disabled><span class="num">3</span><span class="lbl">Рисование</span></button>
+</header>
+
+<main>
+
+  <!-- ШАГ 1 — ЗАГРУЗКА ВИДЕО -->
+  <section class="screen is-active" id="screen1">
+    <div class="pad">
+      <h1>Загрузите видео</h1>
+      <p class="hint">Короткий ролик 3–15 секунд — этого хватит для анимации. Файл никуда не отправляется, всё работает прямо в браузере.</p>
+
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Выбрать видеофайл">
+        <div class="drop-ico">🎬</div>
+        <div class="drop-title">Нажмите, чтобы выбрать видео</div>
+        <div class="drop-sub">или перетащите файл сюда · MP4, WEBM, MOV</div>
+      </div>
+      <input type="file" id="fileInput" accept="video/*" hidden>
+
+      <div class="card hidden" id="videoCard">
+        <video id="video" playsinline muted preload="auto" controls></video>
+        <dl class="meta">
+          <div><dt>Файл</dt><dd id="mName">—</dd></div>
+          <div><dt>Длительность</dt><dd id="mDur">—</dd></div>
+          <div><dt>Размер кадра</dt><dd id="mSize">—</dd></div>
+        </dl>
+        <button class="btn btn-primary btn-lg" id="toStep2">Далее — нарезка на кадры</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ШАГ 2 — НАРЕЗКА -->
+  <section class="screen" id="screen2">
+    <div class="pad">
+      <h1>Сколько кадров в секунду?</h1>
+      <p class="hint">Чем больше FPS, тем плавнее анимация — и тем больше кадров придётся рисовать. Для рисованной анимации обычно берут 8–12.</p>
+
+      <div class="presets" id="presets">
+        <button class="preset" data-fps="8">8<small>эконом</small></button>
+        <button class="preset is-on" data-fps="12">12<small>оптимально</small></button>
+        <button class="preset" data-fps="14">14<small>плавно</small></button>
+        <button class="preset" data-fps="24">24<small>кино</small></button>
+      </div>
+
+      <label class="field">
+        <span class="field-lbl">Точное значение FPS: <b id="fpsVal">12</b></span>
+        <input type="range" id="fps" min="1" max="30" step="1" value="12">
+      </label>
+
+      <div class="callout" id="estimate">Будет создано <b>—</b> кадров.</div>
+
+      <button class="btn btn-primary btn-lg" id="doSlice">Нарезать на кадры</button>
+
+      <div class="progress hidden" id="sliceProgress">
+        <div class="bar"><i id="sliceBar"></i></div>
+        <div class="progress-txt" id="sliceTxt">Готовим…</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ШАГ 3 — РЕДАКТОР -->
+  <section class="screen screen-editor" id="screen3">
+
+    <div class="toolbar">
+      <button class="tool is-on" id="tBrush" title="Кисть" aria-label="Кисть">✏️</button>
+      <button class="tool" id="tEraser" title="Ластик" aria-label="Ластик">🩹</button>
+      <span class="sep"></span>
+      <button class="tool" id="tUndo" title="Отменить" aria-label="Отменить" disabled>↶</button>
+      <button class="tool" id="tRedo" title="Вернуть" aria-label="Вернуть" disabled>↷</button>
+      <span class="sep"></span>
+      <button class="tool" id="tOnion" title="Онион-скин: показать предыдущий кадр" aria-label="Онион-скин">👻</button>
+      <button class="tool" id="tSettings" title="Кисть и фон" aria-label="Настройки кисти и фона">⚙️</button>
+      <span class="spacer"></span>
+      <button class="tool" id="tPlay" title="Просмотр анимации" aria-label="Просмотр">▶</button>
+      <button class="tool" id="tExport" title="Экспорт" aria-label="Экспорт">⬇</button>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="bgCanvas"></canvas>
+        <canvas id="onionCanvas"></canvas>
+        <canvas id="drawCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="panel hidden" id="brushPanel">
+      <label class="field">
+        <span class="field-lbl">Толщина: <b id="sizeVal">6</b> px</span>
+        <input type="range" id="size" min="1" max="60" step="1" value="6">
+      </label>
+      <div class="swatches" id="swatches"></div>
+      <label class="field">
+        <span class="field-lbl">Видимость видео под рисунком: <b id="bgVal">55</b>%</span>
+        <input type="range" id="bgOpacity" min="0" max="100" step="5" value="55">
+      </label>
+      <div class="panel-row">
+        <button class="btn btn-ghost" id="copyPrev">Скопировать предыдущий кадр</button>
+        <button class="btn btn-danger" id="clearFrame">Очистить кадр</button>
+      </div>
+    </div>
+
+    <div class="frame-nav">
+      <button class="nav-btn" id="prevFrame" aria-label="Предыдущий кадр">‹</button>
+      <div class="frame-counter"><b id="frameNo">1</b> / <span id="frameTotal">1</span></div>
+      <button class="nav-btn" id="nextFrame" aria-label="Следующий кадр">›</button>
+    </div>
+
+    <div class="filmstrip" id="filmstrip"></div>
+  </section>
+
+</main>
+
+<!-- ПРОСМОТР -->
+<div class="modal hidden" id="playModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <b>Просмотр</b>
+      <button class="icon-btn" id="closePlay" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="play-stage"><canvas id="playCanvas"></canvas></div>
+    <div class="modal-foot">
+      <label class="check"><input type="checkbox" id="playWithVideo"> Показывать видео</label>
+      <span class="play-fps" id="playFps">12 FPS</span>
+      <button class="btn btn-primary" id="playToggle">Пауза</button>
+    </div>
+  </div>
+</div>
+
+<!-- ЭКСПОРТ -->
+<div class="modal hidden" id="exportModal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <b>Экспорт</b>
+      <button class="icon-btn" id="closeExport" aria-label="Закрыть">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="opt-group">
+        <div class="opt-title">Что сохранить</div>
+        <label class="radio"><input type="radio" name="expWhat" value="draw" checked> Только рисунок</label>
+        <label class="radio"><input type="radio" name="expWhat" value="both"> Рисунок поверх видео</label>
+      </div>
+      <div class="opt-group">
+        <div class="opt-title">Ширина GIF</div>
+        <label class="radio"><input type="radio" name="expW" value="320"> 320 px</label>
+        <label class="radio"><input type="radio" name="expW" value="480" checked> 480 px</label>
+        <label class="radio"><input type="radio" name="expW" value="720"> 720 px</label>
+      </div>
+      <button class="btn btn-primary btn-lg" id="expGif">Собрать GIF</button>
+      <button class="btn btn-lg" id="expZip">Скачать ZIP с PNG</button>
+      <div class="progress hidden" id="expProgress">
+        <div class="bar"><i id="expBar"></i></div>
+        <div class="progress-txt" id="expTxt"></div>
+      </div>
+      <p class="hint small">GIF собирается прямо в браузере — на длинных анимациях это может занять до минуты.</p>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast"></div>
+
+<script src="js/gif.js"></script>
+<script src="js/zip.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
