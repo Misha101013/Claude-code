@@ -335,11 +335,11 @@ const UPS = [
 
 // биомы: sky[3], hill дальний/ближний, земля, акцент, цвет пылинок
 const BIOMES = [
-  {nm:'СУМЕРКИ', sky:[[13,17,48],[22,26,69],[36,29,78]],  h1:[18,22,58], h2:[10,12,34], gr:[16,19,46], ac:[168,255,92],  fl:[200,220,255], flStyle:'star'},
-  {nm:'РОЩА',    sky:[[8,30,32],[13,48,44],[22,64,50]],   h1:[12,44,40], h2:[7,26,26],  gr:[10,32,30], ac:[160,255,150], fl:[190,255,140], flStyle:'fly'},
-  {nm:'КАНЬОН',  sky:[[46,20,24],[74,32,28],[104,52,32]], h1:[64,28,26], h2:[34,15,16], gr:[44,20,20], ac:[255,150,90],  fl:[255,170,90],  flStyle:'ember'},
-  {nm:'ЛЁД',     sky:[[10,32,58],[16,52,84],[28,76,106]], h1:[18,52,80], h2:[9,28,46],  gr:[14,38,58], ac:[140,230,255], fl:[220,245,255], flStyle:'snow'},
-  {nm:'БЕЗДНА',  sky:[[16,6,32],[34,10,58],[54,14,72]],   h1:[28,10,48], h2:[13,5,26],  gr:[20,8,36],  ac:[255,110,199], fl:[255,140,220], flStyle:'star'}
+  {nm:'СУМЕРКИ', sky:[[13,17,48],[22,26,69],[36,29,78]],  h1:[18,22,58], h2:[10,12,34], gr:[16,19,46], ac:[168,255,92],  fl:[200,220,255], flStyle:'star',  dec:[8,10,28]},
+  {nm:'РОЩА',    sky:[[8,30,32],[13,48,44],[22,64,50]],   h1:[12,44,40], h2:[7,26,26],  gr:[10,32,30], ac:[160,255,150], fl:[190,255,140], flStyle:'fly',   dec:[5,20,20]},
+  {nm:'КАНЬОН',  sky:[[46,20,24],[74,32,28],[104,52,32]], h1:[64,28,26], h2:[34,15,16], gr:[44,20,20], ac:[255,150,90],  fl:[255,170,90],  flStyle:'ember', dec:[26,11,12]},
+  {nm:'ЛЁД',     sky:[[10,32,58],[16,52,84],[28,76,106]], h1:[18,52,80], h2:[9,28,46],  gr:[14,38,58], ac:[140,230,255], fl:[220,245,255], flStyle:'snow',  dec:[7,20,35]},
+  {nm:'БЕЗДНА',  sky:[[16,6,32],[34,10,58],[54,14,72]],   h1:[28,10,48], h2:[13,5,26],  gr:[20,8,36],  ac:[255,110,199], fl:[255,140,220], flStyle:'star',  dec:[11,4,22]}
 ];
 const BIOME_LEN = 850;   // метров на биом
 
@@ -1484,6 +1484,240 @@ function hills(layer, colArr, scroll, baseH, amp){
   ctx.fill();
 }
 
+// ============================================================
+//  ДЕКОРАЦИИ БИОМОВ
+//  Всё детерминировано от индекса слота (hash), поэтому при
+//  прокрутке ничего не мерцает и хранить нечего.
+//  Рисуются между слоями холмов -> читаются как задний план и
+//  не путаются с препятствиями (те яркие и красные).
+// ============================================================
+function rr(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y,   x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x,   y+h, r);
+  ctx.arcTo(x,   y+h, x,   y,   r);
+  ctx.arcTo(x,   y,   x+w, y,   r);
+  ctx.closePath(); ctx.fill();
+}
+
+const PROPS = [
+  // 0 СУМЕРКИ — башни с мигающими огнями
+  (x, gy, a, b, c, col, colD, colL) => {
+    const h = (150 + a*240)*S, w = (15 + b*17)*S;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(x-w, gy); ctx.lineTo(x-w*0.66, gy-h);
+    ctx.lineTo(x+w*0.66, gy-h); ctx.lineTo(x+w, gy);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colD;                                  // окна
+    for (let i = 0; i < 4; i++){
+      const wy = gy - h*(0.25 + i*0.19);
+      if (hash(i*4.1 + a*17) > 0.45) ctx.fillRect(x-w*0.3, wy, w*0.6, 2.6*S);
+    }
+    const mast = c > 0.62;
+    if (mast){ ctx.fillStyle = col; ctx.fillRect(x-1.2*S, gy-h-24*S, 2.4*S, 24*S); }
+    const blink = 0.5 + 0.5*Math.sin(tPlay*2.4 + a*9.3);
+    ctx.fillStyle = 'rgba(255,226,190,' + (0.18 + blink*0.6).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(x, gy-h-(mast?26*S:2*S), 2.3*S, 0, 7); ctx.fill();
+  },
+
+  // 1 РОЩА — деревья и бамбук
+  (x, gy, a, b, c, col, colD, colL) => {
+    ctx.fillStyle = col;
+    if (c > 0.66){                                          // бамбуковая купа
+      const h = (180 + a*170)*S;
+      for (let i = 0; i < 3; i++){
+        const bx = x + (i-1)*8*S, bh = h*(0.7 + 0.3*hash(i*3.3 + a*10));
+        ctx.fillRect(bx-1.7*S, gy-bh, 3.4*S, bh);
+        ctx.fillStyle = colL;
+        for (let k = 1; k < 4; k++) ctx.fillRect(bx-3.4*S, gy-bh*k/4, 6.8*S, 1.4*S);
+        ctx.fillStyle = col;
+      }
+      return;
+    }
+    const h = (120 + a*130)*S, r = (36 + b*30)*S;
+    ctx.fillRect(x-3.5*S, gy-h, 7*S, h);                    // ствол
+    for (let i = 0; i < 3; i++){                            // крона из пятен
+      const ox = (hash(i*3.7 + a*11) - 0.5)*r*1.35;
+      const oy = -h - r*0.32 + (hash(i*7.1 + b*5) - 0.5)*r*0.55;
+      ctx.beginPath();
+      ctx.ellipse(x+ox, gy+oy, r*(0.58 + hash(i+b*3)*0.36), r*(0.44 + hash(i*2+a)*0.3), 0, 0, 7);
+      ctx.fill();
+    }
+  },
+
+  // 2 КАНЬОН — столовые горы и кактусы
+  (x, gy, a, b, c, col, colD, colL) => {
+    ctx.fillStyle = col;
+    if (c > 0.6){                                           // кактус
+      const h = (105 + a*95)*S, w = 13*S;
+      rr(x-w/2, gy-h, w, h, w/2);
+      if (b > 0.38){
+        const ay = gy - h*0.6;
+        rr(x+w/2-1*S, ay, 15*S, 6.5*S, 3.2*S);
+        rr(x+w/2+9*S, ay-19*S, 6.5*S, 21*S, 3.2*S);
+      }
+      if (b < 0.62){
+        const ay = gy - h*0.46;
+        rr(x-w/2-14*S, ay, 15*S, 6.5*S, 3.2*S);
+        rr(x-w/2-14*S, ay-17*S, 6.5*S, 19*S, 3.2*S);
+      }
+      return;
+    }
+    const h = (130 + a*170)*S, w = (46 + b*54)*S;            // меса
+    ctx.beginPath();
+    ctx.moveTo(x-w, gy); ctx.lineTo(x-w*0.76, gy-h);
+    ctx.lineTo(x+w*0.76, gy-h); ctx.lineTo(x+w, gy);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colD;                                   // слоистость породы
+    for (let i = 1; i < 4; i++){
+      const f = i/4, yy = gy - h*f, ww = w*(1 - 0.24*f);
+      ctx.fillRect(x-ww, yy, ww*2, 2.6*S);
+    }
+  },
+
+  // 3 ЛЁД — угловатые глыбы. Намеренно НЕ треугольники: треугольник
+  //          в этой игре читается как шип-препятствие.
+  (x, gy, a, b, c, col, colD, colL) => {
+    const h = (85 + a*105)*S, w = (48 + b*58)*S;          // приземистые: 2:1, а не 4:1 как у шипов
+    const nx = x - w*(0.12 + a*0.42);                       // вершина скола
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.moveTo(x-w, gy);
+    ctx.lineTo(x-w*0.86, gy-h*0.5);
+    ctx.lineTo(nx, gy-h);
+    ctx.lineTo(x+w*0.26, gy-h*0.7);
+    ctx.lineTo(x+w*0.92, gy-h*0.36);
+    ctx.lineTo(x+w, gy);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colL;                                   // освещённая грань скола
+    ctx.beginPath();
+    ctx.moveTo(nx, gy-h); ctx.lineTo(x+w*0.26, gy-h*0.7);
+    ctx.lineTo(x+w*0.18, gy); ctx.lineTo(x-w*0.08, gy);
+    ctx.closePath(); ctx.fill();
+    if (c > 0.72){                                          // отколовшийся блок
+      const sw = w*0.36, sh = h*0.3, sx2 = x + w*1.35;
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.moveTo(sx2-sw, gy); ctx.lineTo(sx2-sw*0.35, gy-sh);
+      ctx.lineTo(sx2+sw*0.62, gy-sh*0.58); ctx.lineTo(sx2+sw, gy);
+      ctx.closePath(); ctx.fill();
+    }
+  },
+
+  // 4 БЕЗДНА — парящие обломки и светящиеся кольца
+  (x, gy, a, b, c, col, colD, colL) => {
+    const fy = gy - (110 + a*250)*S + Math.sin(tPlay*0.6 + a*8)*6*S;
+    if (c > 0.7){                                           // кольцо-портал
+      ctx.strokeStyle = colL; ctx.lineWidth = 2.4*S;
+      ctx.beginPath();
+      ctx.ellipse(x, fy, (20+b*20)*S, (7+b*9)*S, a*1.7, 0, 7);
+      ctx.stroke();
+      return;
+    }
+    const r = (22 + b*30)*S;
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    for (let i = 0; i < 7; i++){
+      const ang = i/7*6.283, rad = r*(0.6 + hash(i*2.3 + a*13)*0.5);
+      ctx.lineTo(x + Math.cos(ang)*rad, fy + Math.sin(ang)*rad*0.78);
+    }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = colD;                                   // тень снизу
+    ctx.beginPath();
+    ctx.ellipse(x, fy + r*0.42, r*0.72, r*0.2, 0, 0, 7);
+    ctx.fill();
+  }
+];
+
+const SKYOBJ = [
+  // 0 СУМЕРКИ — луна
+  (x, al) => {
+    const y = H*0.15, r = 32*S;
+    let g = ctx.createRadialGradient(x, y, r*0.5, x, y, r*3.2);
+    g.addColorStop(0, 'rgba(215,228,255,' + (0.18*al).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(215,228,255,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r*3.2, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(226,234,255,' + (0.72*al).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(186,197,232,' + (0.5*al).toFixed(3) + ')';
+    ctx.beginPath(); ctx.arc(x-r*0.32, y-r*0.18, r*0.23, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.34, y+r*0.3, r*0.15, 0, 7); ctx.fill();
+    ctx.beginPath(); ctx.arc(x+r*0.05, y-r*0.45, r*0.11, 0, 7); ctx.fill();
+  },
+  // 1 РОЩА — мглистое солнце сквозь листву
+  (x, al) => {
+    const y = H*0.2, r = 44*S;
+    const g = ctx.createRadialGradient(x, y, 1, x, y, r*2.8);
+    g.addColorStop(0,    'rgba(206,255,176,' + (0.30*al).toFixed(3) + ')');
+    g.addColorStop(0.32, 'rgba(150,232,142,' + (0.13*al).toFixed(3) + ')');
+    g.addColorStop(1,    'rgba(150,232,142,0)');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r*2.8, 0, 7); ctx.fill();
+  },
+  // 2 КАНЬОН — далёкая гряда
+  (x, al) => {
+    ctx.fillStyle = 'rgba(96,45,38,' + (0.5*al).toFixed(3) + ')';
+    ctx.beginPath();
+    ctx.moveTo(x-W*0.75, H*0.66); ctx.lineTo(x-W*0.4, H*0.38);
+    ctx.lineTo(x-W*0.12, H*0.52); ctx.lineTo(x+W*0.18, H*0.3);
+    ctx.lineTo(x+W*0.5, H*0.56);  ctx.lineTo(x+W*0.78, H*0.44);
+    ctx.lineTo(x+W*0.95, H*0.66);
+    ctx.closePath(); ctx.fill();
+  },
+  // 3 ЛЁД — северное сияние
+  (x, al) => {
+    for (let k = 0; k < 3; k++){
+      const yy = H*(0.08 + k*0.055);
+      const g = ctx.createLinearGradient(0, yy-30*S, 0, yy+80*S);
+      g.addColorStop(0,   'rgba(120,255,220,0)');
+      g.addColorStop(0.45,'rgba(120,255,220,' + (0.09*al).toFixed(3) + ')');
+      g.addColorStop(1,   'rgba(90,160,255,0)');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.moveTo(0, yy);
+      for (let i = 0; i <= 6; i++)
+        ctx.lineTo(W*i/6, yy + Math.sin(tPlay*0.45 + i*0.9 + k*1.7)*20*S);
+      ctx.lineTo(W, yy+95*S); ctx.lineTo(0, yy+95*S);
+      ctx.closePath(); ctx.fill();
+    }
+  },
+  // 4 БЕЗДНА — планета с кольцом
+  (x, al) => {
+    const y = H*0.17, r = 42*S;
+    ctx.strokeStyle = 'rgba(255,140,220,' + (0.22*al).toFixed(3) + ')';
+    ctx.lineWidth = 3*S;
+    ctx.beginPath(); ctx.ellipse(x, y, r*1.85, r*0.4, -0.34, Math.PI, 6.283); ctx.stroke();
+    const g = ctx.createRadialGradient(x-r*0.35, y-r*0.35, 1, x, y, r);
+    g.addColorStop(0, 'rgba(126,52,146,' + (0.85*al).toFixed(3) + ')');
+    g.addColorStop(1, 'rgba(34,8,52,'    + (0.85*al).toFixed(3) + ')');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,140,220,' + (0.42*al).toFixed(3) + ')';
+    ctx.beginPath(); ctx.ellipse(x, y, r*1.85, r*0.4, -0.34, 0, Math.PI); ctx.stroke();
+  }
+];
+
+function drawProps(bi, al){
+  if (al <= 0.02) return;
+  const B = BIOMES[bi];
+  const col  = rgba(B.dec, al);
+  const colD = rgba(mix(B.dec, [0,0,0], 0.45), al);
+  const colL = rgba(mix(B.dec, [255,255,255], 0.24), al);
+  const step = 210*S, off = cam*0.52, gy = H - 13*S, fn = PROPS[bi];
+  const start = Math.floor((off - step)/step)*step;
+  for (let x = start; x < off + W + step; x += step){
+    const i = Math.floor(x/step);
+    const a = hash(i*2.17 + bi*13.7), b = hash(i*5.31 + bi*7.3), c = hash(i*9.13 + bi*3.11);
+    if (c < 0.2) continue;                       // пропуски, иначе выходит забор
+    fn(x - off + (a-0.5)*70*S, gy, a, b, c, col, colD, colL);
+  }
+}
+function drawSkyObj(bi, al){
+  if (al <= 0.02) return;
+  const per = W*2.4;
+  const x = ((W*0.68 - cam*0.05) % per + per) % per - W*0.7;
+  SKYOBJ[bi](x, al);
+}
+
 function drawUpIcon(x,y,r,kind){
   ctx.save(); ctx.translate(x,y);
   ctx.beginPath(); ctx.arc(0,0,r,0,7);
@@ -1682,6 +1916,11 @@ function drawObs(o){
 
 function draw(){
   const P = palette();
+  const bd = Math.max(0, dist);
+  const bi = Math.floor(bd / BIOME_LEN) % BIOMES.length;
+  const bfr = (bd % BIOME_LEN) / BIOME_LEN;
+  const bt = bfr > 0.88 ? (bfr - 0.88)/0.12 : 0;     // тот же порог, что у палитры
+  const bn = (bi + 1) % BIOMES.length;
   const sx = shake > 0 ? (Math.random()-.5)*15*shake : 0;
   const sy = shake > 0 ? (Math.random()-.5)*15*shake : 0;
   ctx.save(); ctx.translate(sx, sy);
@@ -1710,6 +1949,10 @@ function draw(){
   }
   ctx.globalAlpha = 1;
 
+  // --- крупный объект в небе (луна / солнце / гряда / сияние / планета) ---
+  drawSkyObj(bi, 1 - bt);
+  if (bt > 0) drawSkyObj(bn, bt);
+
   // --- пылинки биома (за холмами) ---
   ctx.fillStyle = rgb(P.fl);
   for (const f of flecks){
@@ -1721,6 +1964,8 @@ function draw(){
   // --- холмы (параллакс) ---
   hills(0, P.h1, 0.22, 150*S, 110*S);
   hills(1, P.h2, 0.45, 85*S, 75*S);
+  drawProps(bi, 1 - bt);                 // ближний силуэтный слой поверх холмов
+  if (bt > 0) drawProps(bn, bt);
 
   // --- мир ---
   ctx.save(); ctx.translate(-cam, 0);
