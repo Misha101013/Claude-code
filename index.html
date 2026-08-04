@@ -74,6 +74,11 @@
   .btn.gold{background:linear-gradient(180deg,#ffe28a,#f0ac1c);color:#2a1a02;box-shadow:0 0 28px rgba(255,200,80,.35),inset 0 -3px 0 rgba(0,0,0,.18)}
   .btn:disabled{opacity:.4}
   .btn:active{transform:scale(.97)}
+  .btn.beat{background:linear-gradient(180deg,#ff9ad8,#e0359c);color:#2d0519;
+            box-shadow:0 0 28px rgba(255,110,199,.35),inset 0 -3px 0 rgba(0,0,0,.18)}
+  .mi.trk .t span b{color:#eafcd8;font-size:13px;letter-spacing:.5px;font-weight:700}
+  .mi.trk.on{border-color:#ff6ec7;background:rgba(255,110,199,.09)}
+  .mi.trk.on .t i{color:#ff6ec7}
   .row{display:flex;gap:9px;width:100%}
   .row .btn{flex:1 1 0;width:auto;min-width:0;font-size:12.5px;letter-spacing:1px}
 
@@ -164,6 +169,7 @@
       </div>
       <div class="purse">РЕКОРД <b id="mBest">0</b><span class="g">ИСКРЫ <b id="mCoins">0</b></span></div>
       <button class="btn" id="bPlay">ИГРАТЬ</button>
+      <button class="btn beat" id="bRhythm">РИТМ-РЕЖИМ</button>
       <div class="sect">ЗАДАНИЯ</div>
       <div class="mis" id="misList"></div>
       <div class="row">
@@ -200,6 +206,11 @@
         Проскочил вплотную мимо шипа — <b>+близко</b>, множитель растёт.<br>
         Множитель падает, если долго ничего не делаешь.
       </div>
+      <div class="sect">РИТМ-РЕЖИМ</div>
+      <div class="sub" style="font-size:12px">
+        Включи свою музыку — узлы и искры встанут по долям трека.
+        Цепляйся и отпускай <em>в такт</em>: за попадание в долю очки, заряд и множитель.
+      </div>
       <button class="btn ghost" id="bBack1">НАЗАД</button>
     </div>
 
@@ -215,6 +226,30 @@
       <div class="list" id="shopList"></div>
       <div class="msg" id="shopMsg"></div>
       <button class="btn ghost" id="bBack2">НАЗАД</button>
+    </div>
+
+    <!-- РИТМ-РЕЖИМ: ВЫБОР ТРЕКА -->
+    <div class="scr hidden" id="scrRhythm">
+      <h1>РИТМ</h1>
+      <div class="tag">УРОВЕНЬ СТРОИТСЯ ПОД МУЗЫКУ</div>
+      <div class="purse">РЕКОРД РЕЖИМА <b id="rBest">0</b></div>
+      <div class="sub" style="font-size:12px;margin-bottom:14px">
+        Узлы и искры встают по долям. Цепляйся и отпускай <em>в такт</em> — за это
+        очки, заряд и множитель.
+      </div>
+      <div class="sect">ТРЕК</div>
+      <div class="mis">
+        <div class="mi trk" id="trkBuiltin">
+          <div class="t"><span><b>ПУЛЬС</b><br>встроенный техно-луп, 140 BPM</span><i id="trkBI">ВЫБРАТЬ</i></div>
+        </div>
+        <div class="mi trk" id="trkOwn">
+          <div class="t"><span><b>СВОЯ МУЗЫКА</b><br>файл с устройства, бит ищется сам</span><i id="trkOI">ЗАГРУЗИТЬ</i></div>
+        </div>
+      </div>
+      <div class="msg" id="rMsg"></div>
+      <button class="btn beat" id="bRhythmGo" disabled>НАЧАТЬ</button>
+      <button class="btn ghost" id="bBack3">НАЗАД</button>
+      <input type="file" id="fileIn" accept="audio/*" style="display:none">
     </div>
 
     <!-- ПАУЗА -->
@@ -326,7 +361,7 @@ const MISSIONS = [
 //  СОХРАНЕНИЕ
 // ============================================================
 const SKEY = 'pautinka:save:v2';
-let best = 0, coins = 0, xp = 0, sound = true;
+let best = 0, bestR = 0, coins = 0, xp = 0, sound = true;
 let owned = {classic:true}, skin = 'classic';
 let tOwned = {none:true}, trail = 'none';
 let up = {};                 // id -> уровень
@@ -350,9 +385,9 @@ function ensureMissions(){
   while (missions.length < 3) missions.push(rollMission(missions.map(m=>m.id)));
   missions = missions.slice(0,3);
 }
-function serialize(){ return JSON.stringify({best,coins,xp,owned,skin,tOwned,trail,up,missions,sound}); }
+function serialize(){ return JSON.stringify({best,bestR,coins,xp,owned,skin,tOwned,trail,up,missions,sound}); }
 function applySave(d){
-  best = d.best|0; coins = d.coins|0; xp = d.xp|0;
+  best = d.best|0; bestR = d.bestR|0; coins = d.coins|0; xp = d.xp|0;
   skin = d.skin || 'classic'; trail = d.trail || 'none';
   owned = Object.assign({classic:true}, d.owned||{});
   tOwned = Object.assign({none:true}, d.tOwned||{});
@@ -417,7 +452,15 @@ let nextX, startX, score, dist, gemN, mult, combo, comboT, charge, rushT;
 let mods, invuln, shake, stop, tPlay, lastUpX, lastBiome;
 let stat, revives, maxMult, pendingRewards;
 
-function newStat(){ return {perf:0, near:0, rush:0, gold:0}; }
+// --- ритм-режим ---
+let gameMode = 'classic';    // classic | rhythm
+let bm = null;               // карта битов {beats, strong, spb, bpm, dur, name}
+let beatI = 0, lastMT = 0, beatPulse = 0, beatBar = 0, cruise = 0;
+const BEAT_OK = 0.085;       // окно «в такт»
+const BEAT_SOFT = 0.17;      // мягкое окно
+
+function newStat(){ return {perf:0, near:0, rush:0, gold:0, beat:0}; }
+const curBest = () => gameMode === 'rhythm' ? bestR : best;
 
 function reset(){
   ball = {x:W*0.28, y:H*0.34, vx:VX_MIN(), vy:0};
@@ -430,6 +473,7 @@ function reset(){
   invuln = 0; shake = 0; stop = 0; tPlay = 0; lastUpX = -1e9; lastBiome = -1;
   stat = newStat(); maxMult = 1; revives = 0; pendingRewards = [];
   held = false; holdT = 0;
+  beatI = 0; lastMT = 0; beatPulse = 0; beatBar = 0; cruise = VX_MIN()*1.6;
   makeFlecks();
   while (nextX < cam + W*2.2) genChunk();
   syncHud();
@@ -438,7 +482,7 @@ function reset(){
 function syncHud(){
   elScore.textContent = Math.floor(score);
   elDist.textContent = Math.floor(dist);
-  elBest.textContent = best;
+  elBest.textContent = curBest();
   const on = mult > 1.01;
   elMult.textContent = '×' + mult.toFixed(1);
   elMult.classList.toggle('on', on);
@@ -459,7 +503,18 @@ function genChunk(){
   const df = diffAt(d);
   const lk = LUCK();
   const prev = anchors[anchors.length-1];
-  const gap = (195 + Math.random()*70 + df*105) * S;
+  // В ритм-режиме шаг между узлами = целое число долей на крейсерской скорости,
+  // поэтому хват попадает на бит сам собой.
+  let gap, gapBeats = 0;
+  if (gameMode === 'rhythm' && bm){
+    const v = Math.max(VX_MIN(), cruise || VX_MIN()*1.6);
+    gapBeats = 1;
+    gap = v*bm.spb;
+    while (gap < 175*S){ gap *= 2; gapBeats *= 2; }
+    while (gap > 430*S){ gap /= 2; gapBeats /= 2; }
+  } else {
+    gap = (195 + Math.random()*70 + df*105) * S;
+  }
   const x = nextX;
   const y = (65 + Math.random()*135) * S;
 
@@ -522,8 +577,16 @@ function genChunk(){
               h:(60 + Math.random()*70)*S, near:false});
   }
 
-  // --- искры: одиночные или дугой ---
-  if (Math.random() < 0.82){
+  // --- искры: в ритм-режиме строго по долям, иначе как раньше ---
+  if (gameMode === 'rhythm' && bm && gapBeats >= 1){
+    const n = Math.max(1, Math.round(gapBeats));
+    for (let i = 0; i < n; i++){
+      const f = (i + 0.5)/n;
+      gems.push({x:prev.x + (x - prev.x)*f,
+                 y:roof + (185 + Math.sin(f*Math.PI)*85)*S,
+                 got:false, ph:Math.random()*6.28});
+    }
+  } else if (Math.random() < 0.82){
     if (Math.random() < 0.34){
       const n = 4 + Math.floor(Math.random()*4);
       const cx = midX, cy = roof + (215 + Math.random()*70)*S, rad = 60*S;
@@ -597,12 +660,14 @@ function attach(a){
 
   sfx('grab');
   for (let i=0;i<6;i++) puff(ball.x, ball.y, sk_c());
+  onBeatHit('grab');
 }
 
 function detach(manual){
   if (!rope) return;
   const th = rope.th, om = rope.om, t = rope.t;
   rope = null;
+  if (manual) onBeatHit('release');
   if (!manual || t < 0.12) return;
   // om<0 — движемся вперёд по дуге вверх; только тогда есть смысл в тайминге
   if (om >= 0) return;
@@ -682,6 +747,20 @@ function takeUp(u){
 function step(dt){
   tPlay += dt;
   if (held) holdT += dt;
+
+  // --- продвижение по битам ---
+  if (gameMode === 'rhythm' && bm){
+    const t = musicTime();
+    if (t < lastMT) beatI = 0;            // трек закольцевался
+    lastMT = t;
+    while (beatI < bm.beats.length && bm.beats[beatI] <= t){
+      beatPulse = bm.strong[beatI] ? 1.5 : 1;
+      beatBar = beatI % 4;
+      beatI++;
+    }
+  }
+  if (beatPulse > 0) beatPulse -= dt*3.2;
+  cruise += (ball.vx - cruise) * Math.min(1, 0.6*dt);
   const g = GRAV();
   const flying = rushT > 0 || mods.plane > 0;
   const wasFlying = flying;
@@ -932,8 +1011,8 @@ function missionProgress(m){
 function finish(){
   mode = 'over';
   const sc = Math.floor(score);
-  const rec = sc > best;
-  best = Math.max(best, sc);
+  const rec = sc > curBest();
+  if (gameMode === 'rhythm') bestR = Math.max(bestR, sc); else best = Math.max(best, sc);
 
   // задания
   let bonus = 0;
@@ -955,7 +1034,7 @@ function finish(){
   $('oTitle').textContent = rec ? 'НОВЫЙ РЕКОРД' : 'РАЗБИЛСЯ';
   $('oScore').textContent = sc;
   $('oInfo').innerHTML = '+' + earned + ' искр' + (bonus ? ' <span style="color:#a8ff5c">(+'+bonus+' за задания)</span>' : '')
-                       + '<br>' + (rec ? 'лучший забег' : 'рекорд ' + best);
+                       + '<br>' + (rec ? 'лучший забег' : 'рекорд ' + curBest());
   $('oDist').textContent = Math.floor(dist);
   $('oGems').textContent = gemN;
   $('oMult').textContent = '×' + maxMult.toFixed(1);
@@ -989,6 +1068,7 @@ function revive(){
   coins -= cost; revives++; save();
   mode = 'play';
   ov.classList.add('hidden');
+  if (gameMode === 'rhythm') playTrack(musicOff);
   // расчистить пространство и подкинуть игрока
   obs = obs.filter(o => o.x < ball.x - 60*S || o.x > ball.x + W*0.9);
   ball.y = Math.min(ball.y, H*0.4); ball.vy = -140*S; ball.vx = Math.max(ball.vx, VX_MIN()*1.4);
@@ -1100,6 +1180,7 @@ function sfx(name){
   } catch(e){}
 }
 function music(){
+  if (gameMode === 'rhythm') return;          // в ритм-режиме играет выбранный трек
   if (!ac || !sound || mode !== 'play') return;
   const t = ac.currentTime;
   if (nextNote < t) nextNote = t + 0.05;
@@ -1128,6 +1209,231 @@ function music(){
     } catch(e){}
     nextNote += beat; noteI++;
   }
+}
+
+// ============================================================
+//  РИТМ: ВСТРОЕННЫЙ ТРЕК
+//  Синтезируем жёсткий техно-луп прямо в браузере. Сетка битов
+//  здесь известна точно — её не надо угадывать, синхрон идеальный.
+// ============================================================
+async function buildTrack(){
+  audioInit(); if (!ac) throw new Error('no audio');
+  const bpm = 140, nBeats = 32, spb = 60/bpm, dur = nBeats*spb, sr = 44100;
+  const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const oc = new OC(1, Math.ceil(dur*sr), sr);
+
+  const nlen = Math.floor(sr*0.6);
+  const nb = oc.createBuffer(1, nlen, sr), nd = nb.getChannelData(0);
+  for (let i=0;i<nlen;i++) nd[i] = Math.random()*2-1;
+
+  const bus = oc.createGain(); bus.gain.value = 0.85; bus.connect(oc.destination);
+
+  const kick = t => {
+    const o = oc.createOscillator(), g = oc.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(155, t);
+    o.frequency.exponentialRampToValueAtTime(44, t+0.085);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(1.0, t+0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+0.33);
+    o.connect(g); g.connect(bus); o.start(t); o.stop(t+0.35);
+  };
+  const noise = (t, d, type, freq, q, vol) => {
+    const s = oc.createBufferSource(); s.buffer = nb;
+    const f = oc.createBiquadFilter(); f.type = type; f.frequency.value = freq; if (q) f.Q.value = q;
+    const g = oc.createGain();
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+    s.connect(f); f.connect(g); g.connect(bus); s.start(t); s.stop(t+d+0.02);
+  };
+  const bass = (t, d, f) => {
+    const o = oc.createOscillator(), g = oc.createGain(), lp = oc.createBiquadFilter();
+    o.type = 'sawtooth'; o.frequency.value = f;
+    lp.type = 'lowpass'; lp.Q.value = 6;
+    lp.frequency.setValueAtTime(1600, t);
+    lp.frequency.exponentialRampToValueAtTime(200, t+d);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.3, t+0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+    o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); o.stop(t+d+0.02);
+  };
+  const stab = (t, d, root) => {
+    for (const mul of [1, 1.1892, 1.4983]) {      // минорное трезвучие
+      for (const det of [-4, 4]) {
+        const o = oc.createOscillator(), g = oc.createGain(), lp = oc.createBiquadFilter();
+        o.type = 'sawtooth'; o.frequency.value = root*mul + det;
+        lp.type = 'lowpass';
+        lp.frequency.setValueAtTime(3200, t);
+        lp.frequency.exponentialRampToValueAtTime(600, t+d);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.055, t+0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+d);
+        o.connect(lp); lp.connect(g); g.connect(bus); o.start(t); o.stop(t+d+0.02);
+      }
+    }
+  };
+
+  const ROOT = 55;                                 // A1
+  const PAT  = [0, 0, 3, 0, 5, 0, 3, -2];          // полутона по восьмым
+  for (let b = 0; b < nBeats; b++){
+    const t = b*spb, bar = Math.floor(b/4), inBar = b%4;
+    kick(t);
+    if (inBar === 1 || inBar === 3)                                  // клэп
+      noise(t, 0.16, 'bandpass', 1900, 1.2, 0.34);
+    for (let h = 0; h < 2; h++)                                      // хэт по восьмым
+      noise(t + h*spb/2, h ? 0.028 : 0.045, 'highpass', 8200, 0, h ? 0.1 : 0.16);
+    if (bar >= 1)
+      for (let e = 0; e < 2; e++){
+        const st = PAT[(b*2+e) % PAT.length];
+        bass(t + e*spb/2, spb/2*0.92, ROOT*Math.pow(2, st/12));
+      }
+    if (bar >= 3 && (inBar === 0 || inBar === 2))
+      stab(t, spb*0.85, ROOT*4*Math.pow(2, (bar%2?3:0)/12));
+    if (bar === 3 && inBar === 3)                                    // сбивка
+      for (let i = 0; i < 4; i++) noise(t + i*spb/4, 0.07, 'bandpass', 1400+i*500, 1, 0.26);
+  }
+
+  const buf = await oc.startRendering();
+  const beats = new Float64Array(nBeats), strong = new Uint8Array(nBeats);
+  for (let i = 0; i < nBeats; i++){ beats[i] = i*spb; strong[i] = i%4 === 0 ? 1 : 0; }
+  return {buffer:buf, beats, strong, spb, bpm, dur, name:'ПУЛЬС'};
+}
+
+// ============================================================
+//  РИТМ: АНАЛИЗ ЗАГРУЖЕННОГО ТРЕКА
+//  Низкочастотная огибающая -> функция онсетов -> автокорреляция
+//  для темпа -> подбор фазы. Работает по битовой музыке.
+// ============================================================
+async function analyzeTrack(arrayBuffer, name, onProgress){
+  audioInit(); if (!ac) throw new Error('no audio');
+  onProgress && onProgress('ДЕКОДИРУЮ…');
+  const buf = await new Promise((res, rej) => {
+    const p = ac.decodeAudioData(arrayBuffer, res, rej);
+    if (p && p.then) p.then(res, rej);
+  });
+
+  if (buf.duration < 5) throw new Error('SHORT');   // 0.3-секундная петля — это дребезг, а не музыка
+
+  onProgress && onProgress('ИЩУ БИТ…');
+  const sr = buf.sampleRate;
+  // прогоняем через lowpass — бочка живёт снизу
+  const OC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+  const oc = new OC(1, buf.length, sr);
+  const src = oc.createBufferSource(); src.buffer = buf;
+  const lp = oc.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 170; lp.Q.value = 1;
+  src.connect(lp); lp.connect(oc.destination); src.start();
+  const low = await oc.startRendering();
+
+  const d = low.getChannelData(0);
+  const hop = 512, n = Math.floor(d.length/hop), fps = sr/hop;
+  const env = new Float32Array(n);
+  for (let i = 0; i < n; i++){
+    let s = 0;
+    for (let j = 0; j < hop; j++){ const v = d[i*hop+j]; s += v*v; }
+    env[i] = Math.sqrt(s/hop);
+  }
+  // онсеты: положительный прирост энергии над скользящим средним
+  const on = new Float32Array(n), win = 20;
+  for (let i = 1; i < n; i++){
+    let m = 0, c = 0;
+    for (let j = Math.max(0,i-win); j < Math.min(n,i+win); j++){ m += env[j]; c++; }
+    on[i] = Math.max(0, (env[i]-env[i-1]) - (m/c)*0.15);
+  }
+  let peak = 0; for (let i = 0; i < n; i++) peak = Math.max(peak, on[i]);
+  if (peak > 0) for (let i = 0; i < n; i++) on[i] /= peak;
+
+  // темп: автокорреляция в диапазоне 70..190 BPM
+  const minL = Math.max(2, Math.round(fps*60/190)), maxL = Math.round(fps*60/70);
+  let bestL = Math.round(fps*60/128), bestS = -1;
+  for (let lag = minL; lag <= maxL; lag++){
+    let s = 0;
+    for (let i = 0; i + lag < n; i++) s += on[i]*on[i+lag];
+    s /= (n - lag);
+    if (s > bestS){ bestS = s; bestL = lag; }
+  }
+  // разрешаем октавные ошибки в пользу 95..165 BPM
+  const bpmOf = l => 60*fps/l;
+  for (const cand of [bestL*2, bestL/2]){
+    const L = Math.round(cand);
+    if (L < minL || L > maxL) continue;
+    const b = bpmOf(L);
+    if (b >= 95 && b <= 165 && (bpmOf(bestL) < 95 || bpmOf(bestL) > 165)) bestL = L;
+  }
+  // фаза: перебираем смещение, максимизируем сумму онсетов на сетке
+  let bestOff = 0, bestP = -1;
+  for (let off = 0; off < bestL; off++){
+    let s = 0;
+    for (let k = 0; off + k*bestL < n; k++){
+      const i = Math.round(off + k*bestL);
+      s += Math.max(on[i], on[Math.max(0,i-1)], on[Math.min(n-1,i+1)]);
+    }
+    if (s > bestP){ bestP = s; bestOff = off; }
+  }
+
+  const spb = bestL/fps, dur = buf.duration;
+  const cnt = Math.max(1, Math.floor((dur - bestOff/fps)/spb));
+  const beats = new Float64Array(cnt), strong = new Uint8Array(cnt);
+  for (let k = 0; k < cnt; k++){
+    beats[k] = bestOff/fps + k*spb;
+    strong[k] = k%4 === 0 ? 1 : 0;
+  }
+  const bpm = Math.round(60/spb);
+  // если музыка совсем не битовая — сетка всё равно есть, просто ровная
+  return {buffer:buf, beats, strong, spb, bpm, dur,
+          name:(name||'СВОЙ ТРЕК').replace(/\.[^.]+$/,'').slice(0,22).toUpperCase(),
+          weak: bestS < 1e-6};
+}
+
+// ============================================================
+//  РИТМ: ВОСПРОИЗВЕДЕНИЕ И БИТЫ
+// ============================================================
+let musicSrc = null, musicStart = 0, musicOff = 0, musicGainNode = null;
+function musicTime(){
+  if (!musicSrc || !bm) return 0;
+  return (musicOff + (ac.currentTime - musicStart)) % bm.dur;
+}
+function playTrack(from){
+  if (!bm || !ac) return;
+  stopTrack();
+  musicOff = ((from || 0) % bm.dur + bm.dur) % bm.dur;
+  musicSrc = ac.createBufferSource();
+  musicSrc.buffer = bm.buffer; musicSrc.loop = true;
+  musicGainNode = ac.createGain(); musicGainNode.gain.value = 0.75;
+  musicSrc.connect(musicGainNode); musicGainNode.connect(master);
+  musicStart = ac.currentTime;
+  musicSrc.start(0, musicOff);
+}
+function stopTrack(){
+  if (musicSrc){ try { musicSrc.stop(); } catch(e){} try { musicSrc.disconnect(); } catch(e){} }
+  musicSrc = null;
+}
+// ближайший бит к моменту t (с учётом закольцовки)
+function beatDelta(t){
+  if (!bm || !bm.beats.length) return 9;
+  const B = bm.beats;
+  let lo = 0, hi = B.length-1;
+  while (lo < hi){ const m = (lo+hi)>>1; if (B[m] < t) lo = m+1; else hi = m; }
+  let d = 9;
+  for (const i of [lo-1, lo, lo+1]) if (i >= 0 && i < B.length) {
+    const x = t - B[i]; if (Math.abs(x) < Math.abs(d)) d = x;
+  }
+  const wrap = t - (bm.dur + B[0]);            // бит на стыке петли
+  if (Math.abs(wrap) < Math.abs(d)) d = wrap;
+  return d;
+}
+// начисление за попадание в такт; вызывается на цепляние и на отпускание
+function onBeatHit(what){
+  if (gameMode !== 'rhythm' || !bm || mode !== 'play') return 0;
+  const a = Math.abs(beatDelta(musicTime()));
+  if (a <= BEAT_OK){
+    stat.beat++; bump(1); addCharge(9); score += 30*mult;
+    flo(ball.x, ball.y - (what === 'grab' ? 40 : 48)*S, 'В ТАКТ!', '#ff6ec7');
+    for (let i=0;i<10;i++) puff(ball.x, ball.y, '#ff6ec7');
+    haptic(9);
+    return 2;
+  }
+  if (a <= BEAT_SOFT){ addCharge(4); score += 8*mult; return 1; }
+  return 0;
 }
 
 // ============================================================
@@ -1214,6 +1520,18 @@ function drawModBar(){
     ctx.fillStyle = 'rgba(255,255,255,.12)'; ctx.fillRect(x-20*S, y+26*S, 40*S, 4*S);
     ctx.fillStyle = upColor(k); ctx.fillRect(x-20*S, y+26*S, 40*S*Math.max(0,Math.min(1,f)), 4*S);
     y += 56*S;
+  }
+}
+
+function drawBeatUI(){
+  if (gameMode !== 'rhythm' || !bm) return;
+  const p = Math.max(0, beatPulse), cx = W*0.5, cy = H - 62*S;
+  for (let i = 0; i < 4; i++){
+    const on = i === beatBar;
+    ctx.beginPath(); ctx.arc(cx + (i-1.5)*20*S, cy, (on ? 5.5 + p*3.2 : 3.4)*S, 0, 7);
+    ctx.fillStyle = on ? '#ff6ec7' : 'rgba(255,255,255,.22)';
+    if (on){ ctx.shadowColor = '#ff6ec7'; ctx.shadowBlur = 15*p; }
+    ctx.fill(); ctx.shadowBlur = 0;
   }
 }
 
@@ -1373,6 +1691,15 @@ function draw(){
   bg.addColorStop(0, rgb(P.sky[0])); bg.addColorStop(0.55, rgb(P.sky[1])); bg.addColorStop(1, rgb(P.sky[2]));
   ctx.fillStyle = bg; ctx.fillRect(-20, -20, W+40, H+40);
 
+  // --- вспышка на долю ---
+  if (gameMode === 'rhythm' && beatPulse > 0){
+    const p = Math.max(0, Math.min(1.5, beatPulse));
+    const gr = ctx.createRadialGradient(W*0.5, H*0.5, H*0.14, W*0.5, H*0.5, H*0.8);
+    gr.addColorStop(0, 'rgba(255,110,199,0)');
+    gr.addColorStop(1, 'rgba(255,110,199,' + (0.14*p).toFixed(3) + ')');
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+  }
+
   // --- звёзды ---
   ctx.fillStyle = '#fff';
   for (let i=0;i<40;i++){
@@ -1508,6 +1835,11 @@ function draw(){
       ctx.lineTo(-R()*0.7, 0); ctx.lineTo(-R()*1.6, R()*1.5);
       ctx.closePath(); ctx.fillStyle = 'rgba(168,255,92,.35)'; ctx.fill(); ctx.restore();
     }
+    if (gameMode === 'rhythm' && beatPulse > 0){
+      ctx.beginPath(); ctx.arc(ball.x, ball.y, R()*(1.6 + beatPulse*1.2), 0, 7);
+      ctx.strokeStyle = 'rgba(255,110,199,' + (0.42*Math.min(1,beatPulse)).toFixed(3) + ')';
+      ctx.lineWidth = 2*S; ctx.stroke();
+    }
     if (mode !== 'dying'){
       const c = sk_c();
       ctx.globalAlpha = skin === 'ghost' ? 0.62 : 1;
@@ -1529,7 +1861,7 @@ function draw(){
     ctx.fillStyle = gr; ctx.fillRect(0, H - 130*S, W, 130*S);
   }
 
-  if (mode === 'play' || mode === 'dying'){ drawModBar(); drawChargeRing(); }
+  if (mode === 'play' || mode === 'dying'){ drawModBar(); drawChargeRing(); drawBeatUI(); }
   ctx.restore();  // тряска
 }
 
@@ -1665,23 +1997,30 @@ function renderMissions(){
 //  ЭКРАНЫ
 // ============================================================
 function show(id){
+  if (id !== 'scrPause') stopTrack();
   ov.classList.remove('hidden');
   for (const s of ov.querySelectorAll('.scr')) s.classList.toggle('hidden', s.id !== id);
-  money(); elBest.textContent = best;
+  money(); elBest.textContent = curBest();
   elRush.classList.remove('on');
   if (id === 'scrShop') renderShop();
+  if (id === 'scrRhythm'){ gameMode = 'rhythm'; $('rBest').textContent = bestR; }
   if (id === 'scrMenu'){ mode = 'menu'; renderMissions(); setSound(sound); }
 }
-function start(){
+function start(m){
   audioInit();
   if (ac && ac.state === 'suspended') ac.resume();
+  if (m) gameMode = m;
+  if (gameMode === 'rhythm' && !bm){ show('scrRhythm'); return; }
   reset(); mode = 'play';
   ov.classList.add('hidden');
   lastT = performance.now(); acc = 0; nextNote = ac ? ac.currentTime : 0;
+  if (gameMode === 'rhythm') playTrack(0); else stopTrack();
 }
+let pausedAt = 0;
 function pause(){
   if (mode !== 'play') return;
   mode = 'pause'; held = false;
+  if (gameMode === 'rhythm' && musicSrc){ pausedAt = musicTime(); stopTrack(); }
   $('pInfo').textContent = Math.floor(score) + ' ОЧКОВ · ' + Math.floor(dist) + ' М';
   show('scrPause');
 }
@@ -1690,9 +2029,49 @@ function resume(){
   mode = 'play'; ov.classList.add('hidden');
   lastT = performance.now(); acc = 0;
   if (ac) nextNote = ac.currentTime;
+  if (gameMode === 'rhythm') playTrack(pausedAt);
 }
 
-$('bPlay').onclick    = e => { e.stopPropagation(); start(); };
+// ---- выбор трека для ритм-режима ----
+function rSay(t, ok){
+  $('rMsg').textContent = t || '';
+  $('rMsg').style.color = ok ? '#a8ff5c' : '#ff8ba0';
+}
+function pickTrack(which){
+  $('trkBuiltin').classList.toggle('on', which === 'builtin');
+  $('trkOwn').classList.toggle('on', which === 'own');
+  $('trkBI').textContent = which === 'builtin' ? 'ВЫБРАН' : 'ВЫБРАТЬ';
+  $('trkOI').textContent = which === 'own' ? 'ВЫБРАН' : 'ЗАГРУЗИТЬ';
+  $('bRhythmGo').disabled = !bm;
+  if (bm) rSay(bm.name + ' · ' + bm.bpm + ' BPM' + (bm.weak ? ' · БИТ СЛАБЫЙ' : ''), true);
+}
+$('bRhythm').onclick  = e => { e.stopPropagation(); show('scrRhythm'); };
+$('bBack3').onclick   = e => { e.stopPropagation(); gameMode = 'classic'; show('scrMenu'); };
+$('trkBuiltin').onclick = async e => {
+  e.stopPropagation();
+  rSay('СОБИРАЮ ТРЕК…', true); $('bRhythmGo').disabled = true;
+  try { bm = await buildTrack(); pickTrack('builtin'); }
+  catch(err){ bm = null; rSay('НЕ ВЫШЛО СОБРАТЬ ТРЕК'); }
+};
+$('trkOwn').onclick   = e => { e.stopPropagation(); audioInit(); $('fileIn').click(); };
+$('fileIn').onchange  = async e => {
+  const f = e.target.files && e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  $('bRhythmGo').disabled = true;
+  try {
+    rSay('ЧИТАЮ ФАЙЛ…', true);
+    const ab = await f.arrayBuffer();
+    bm = await analyzeTrack(ab, f.name, t => rSay(t, true));
+    pickTrack('own');
+  } catch(err){
+    bm = null; pickTrack(null);
+    rSay(err && err.message === 'SHORT' ? 'ТРЕК КОРОЧЕ 5 СЕКУНД' : 'ФОРМАТ НЕ ПОДДЕРЖИВАЕТСЯ');
+  }
+};
+$('bRhythmGo').onclick = e => { e.stopPropagation(); if (bm) start('rhythm'); };
+
+$('bPlay').onclick    = e => { e.stopPropagation(); start('classic'); };
 $('bAgain').onclick   = e => { e.stopPropagation(); start(); };
 $('bShop').onclick    = e => { e.stopPropagation(); show('scrShop'); };
 $('bHelp').onclick    = e => { e.stopPropagation(); show('scrHelp'); };
@@ -1735,9 +2114,12 @@ addEventListener('keydown', e => {
   if (e.code === 'Space' || e.code === 'ArrowUp'){
     e.preventDefault();
     if (mode === 'play') down(e);
-    else if (mode === 'menu') start();
     else if (mode === 'over') start();
     else if (mode === 'pause') resume();
+    else if (mode === 'menu'){
+      if (!$('scrRhythm').classList.contains('hidden')){ if (bm) start('rhythm'); }
+      else if (!$('scrMenu').classList.contains('hidden')) start('classic');
+    }
   }
   if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'ArrowDown') startRush();
   if (e.code === 'Escape' || e.code === 'KeyP'){ mode === 'play' ? pause() : (mode === 'pause' ? resume() : 0); }
