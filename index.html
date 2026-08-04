@@ -273,6 +273,7 @@
       <button class="btn gold hidden" id="bRevive">ПРОДОЛЖИТЬ · 60 ◆</button>
       <button class="btn" id="bAgain">ЕЩЁ РАЗ</button>
       <button class="btn ghost" id="bMenu">В МЕНЮ</button>
+      <div class="tag" style="margin:8px 0 0">ТАП ГДЕ УГОДНО — ЕЩЁ РАЗ</div>
     </div>
   </div>
 </div>
@@ -343,6 +344,28 @@ const BIOMES = [
 ];
 const BIOME_LEN = 850;   // метров на биом
 
+// Ступени разгона. Множитель раньше упирался в потолок и терял смысл;
+// теперь он растёт дальше, но с каждой ступенью комбо гаснет быстрее.
+const HEATS = [
+  {at:3,  nm:'РАЗГОН',        col:'#ffd257', rgb:[255,210,87]},
+  {at:5,  nm:'ЖАР',           col:'#ff9d6e', rgb:[255,157,110]},
+  {at:7.5,nm:'ПЕКЛО',         col:'#ff5d6e', rgb:[255,93,110]},
+  {at:10, nm:'БЕЛОЕ КАЛЕНИЕ', col:'#ffffff', rgb:[255,255,255]}
+];
+const heatOf = m => { let h = 0; for (let i = 0; i < HEATS.length; i++) if (m >= HEATS[i].at) h = i+1; return h; };
+
+// Случайный модификатор забега: у медианного забега всего ~400 м,
+// поэтому игрок раз за разом видит один и тот же кусок мира.
+// Модификатор меняет правила и держит первые метры свежими.
+const MUTS = [
+  {id:'none',   nm:'ШТИЛЬ',         ds:'обычный забег'},
+  {id:'gold',   nm:'ЗОЛОТАЯ ЖИЛА',  ds:'много золотых узлов, но и шипов больше'},
+  {id:'light',  nm:'НЕВЕСОМОСТЬ',   ds:'тяготение слабее, узлы реже'},
+  {id:'rain',   nm:'ЛИВЕНЬ ИСКР',   ds:'искр вдвое больше, комбо гаснет быстрее'},
+  {id:'surge',  nm:'ПЕРЕГРУЗКА',    ds:'заряд копится вдвое быстрее, препятствий больше'},
+  {id:'sprint', nm:'ГОНКА',         ds:'быстрее и очков больше, но всё плотнее'}
+];
+
 const RANKS = ['НОВИЧОК','ЛОВКАЧ','КАНАТОХОДЕЦ','ЛЕТУН','ПАУК','ВИРТУОЗ','ЛЕГЕНДА'];
 const XP_STEP = l => 220 + l * 190;
 
@@ -361,7 +384,7 @@ const MISSIONS = [
 //  СОХРАНЕНИЕ
 // ============================================================
 const SKEY = 'pautinka:save:v2';
-let best = 0, bestR = 0, coins = 0, xp = 0, sound = true;
+let best = 0, bestR = 0, bestD = 0, bestDR = 0, coins = 0, xp = 0, sound = true;
 let owned = {classic:true}, skin = 'classic';
 let tOwned = {none:true}, trail = 'none';
 let up = {};                 // id -> уровень
@@ -385,9 +408,10 @@ function ensureMissions(){
   while (missions.length < 3) missions.push(rollMission(missions.map(m=>m.id)));
   missions = missions.slice(0,3);
 }
-function serialize(){ return JSON.stringify({best,bestR,coins,xp,owned,skin,tOwned,trail,up,missions,sound}); }
+function serialize(){ return JSON.stringify({best,bestR,bestD,bestDR,coins,xp,owned,skin,tOwned,trail,up,missions,sound}); }
 function applySave(d){
-  best = d.best|0; bestR = d.bestR|0; coins = d.coins|0; xp = d.xp|0;
+  best = d.best|0; bestR = d.bestR|0; bestD = d.bestD|0; bestDR = d.bestDR|0;
+  coins = d.coins|0; xp = d.xp|0;
   skin = d.skin || 'classic'; trail = d.trail || 'none';
   owned = Object.assign({classic:true}, d.owned||{});
   tOwned = Object.assign({none:true}, d.tOwned||{});
@@ -418,12 +442,12 @@ const curTrail = () => TRAILS.find(t=>t.id===trail) || TRAILS[0];
 // ============================================================
 //  БАЛАНС
 // ============================================================
-const GRAV      = () => 640 * S;
+const GRAV      = () => 640 * S * (mut && mut.id === 'light'  ? 0.82 : 1);
 const R         = () => 10.5 * S;
 const ROPE_MAX  = () => 340 * S;
 const ROPE_MIN  = () => 88 * S;
 const V_MAX     = () => 780 * S;
-const VX_MIN    = () => 150 * S;
+const VX_MIN    = () => 150 * S * (mut && mut.id === 'sprint' ? 1.25 : 1);
 const REEL      = () => 128 * S;
 const PLANE_SPD = () => 470 * S;
 const RUSH_SPD  = () => 900 * S;
@@ -431,14 +455,14 @@ const AUTO_REL  = 0.24;
 const PERFECT   = Math.PI / 4;
 const PERF_W    = 0.20;      // окно «идеально»
 const GOOD_W    = 0.44;      // окно «хорошо»
-const COMBO_T   = 3.4;       // сек до сброса комбо
+const COMBO_T   = 3.4;       // сек до сброса комбо (сжимается с ростом ступени)
 const CHARGE_MAX= 100;
 
 const T_MAGNET = () => 7 + 1.9 * upLv('magnet');
 const MAG_R    = () => (225 + 68 * upLv('magnet')) * S;
 const T_PLANE  = () => 5.5;
 const T_RUSH   = () => 1.4 + 0.35 * upLv('rush');
-const CHARGE_K = () => 1 + 0.24 * upLv('charge');
+const CHARGE_K = () => (1 + 0.24 * upLv('charge')) * (mut && mut.id === 'surge' ? 2 : 1);
 const LUCK     = () => upLv('luck');
 const COIN_K   = () => 1 + 0.15 * upLv('value');
 
@@ -451,6 +475,7 @@ let ball, rope, cam, anchors, obs, gems, ups, parts, flecks, floats, ribbon;
 let nextX, startX, score, dist, gemN, mult, combo, comboT, charge, rushT;
 let mods, invuln, shake, stop, tPlay, lastUpX, lastBiome;
 let stat, revives, maxMult, pendingRewards;
+let heat, mut, recX, recDone, misDone, misT, overAt = 0;
 
 // --- ритм-режим ---
 let gameMode = 'classic';    // classic | rhythm
@@ -460,9 +485,11 @@ const BEAT_OK = 0.085;       // окно «в такт»
 const BEAT_SOFT = 0.17;      // мягкое окно
 
 function newStat(){ return {perf:0, near:0, rush:0, gold:0, beat:0}; }
-const curBest = () => gameMode === 'rhythm' ? bestR : best;
+const curBest  = () => gameMode === 'rhythm' ? bestR : best;
+const curBestD = () => gameMode === 'rhythm' ? bestDR : bestD;
 
 function reset(){
+  mut = MUTS[Math.floor(Math.random()*MUTS.length)];   // до первых обращений к GRAV/VX_MIN
   ball = {x:W*0.28, y:H*0.34, vx:VX_MIN(), vy:0};
   startX = ball.x;
   rope = null; cam = ball.x - W*0.3;
@@ -474,6 +501,9 @@ function reset(){
   stat = newStat(); maxMult = 1; revives = 0; pendingRewards = [];
   held = false; holdT = 0;
   beatI = 0; lastMT = 0; beatPulse = 0; beatBar = 0; cruise = VX_MIN()*1.6;
+  heat = 0; misDone = [false,false,false]; misT = 0.4;
+  recDone = false;
+  recX = curBestD() > 40 ? startX + curBestD()*30*S : 0;   // маяк личного рекорда
   makeFlecks();
   while (nextX < cam + W*2.2) genChunk();
   syncHud();
@@ -485,6 +515,7 @@ function syncHud(){
   elBest.textContent = curBest();
   const on = mult > 1.01;
   elMult.textContent = '×' + mult.toFixed(1);
+  elMult.style.color = heat ? HEATS[heat-1].col : '#ffd257';
   elMult.classList.toggle('on', on);
   elComboBar.classList.toggle('on', on);
   elComboFill.style.width = Math.max(0, Math.min(1, comboT/COMBO_T))*100 + '%';
@@ -513,7 +544,8 @@ function genChunk(){
     while (gap < 175*S){ gap *= 2; gapBeats *= 2; }
     while (gap > 430*S){ gap /= 2; gapBeats /= 2; }
   } else {
-    gap = (195 + Math.random()*70 + df*105) * S;
+    gap = (195 + Math.random()*70 + df*105) * S
+        * (mut.id === 'light' ? 1.18 : mut.id === 'sprint' ? 0.88 : 1);
   }
   const x = nextX;
   const y = (65 + Math.random()*135) * S;
@@ -521,7 +553,8 @@ function genChunk(){
   // --- тип узла ---
   let type = 'norm';
   const rt = Math.random();
-  if (rt < 0.09 + lk*0.035)            type = 'gold';
+  const goldK = mut.id === 'gold' ? 0.22 : 0;
+  if (rt < 0.09 + lk*0.035 + goldK)    type = 'gold';
   else if (df > 0.13 && rt < 0.27)     type = 'frail';
   else if (df > 0.30 && rt < 0.44)     type = 'move';
   const a = {x, y, r:5*S, glow:0, type, dead:false, fuse:0, ph:Math.random()*6.28,
@@ -536,7 +569,8 @@ function genChunk(){
   let placed = 0;
 
   // --- шипы снизу ---
-  if (Math.random() < 0.5 + df*0.28){
+  const obsK = mut.id === 'gold' ? 0.18 : mut.id === 'surge' ? 0.15 : mut.id === 'sprint' ? 0.1 : 0;
+  if (Math.random() < 0.5 + df*0.28 + obsK){
     obs.push({t:'spike', x:midX + (Math.random()-0.5)*60*S, w:38*S,
               h:(90 + Math.random()*90 + df*115)*S, near:false});
     placed++;
@@ -577,6 +611,7 @@ function genChunk(){
               h:(60 + Math.random()*70)*S, near:false});
   }
 
+  const gemStart = gems.length;
   // --- искры: в ритм-режиме строго по долям, иначе как раньше ---
   if (gameMode === 'rhythm' && bm && gapBeats >= 1){
     const n = Math.max(1, Math.round(gapBeats));
@@ -597,6 +632,14 @@ function genChunk(){
       }
     } else {
       gems.push({x:midX, y:roof + (185 + Math.random()*95)*S, got:false, ph:Math.random()*6.28});
+    }
+  }
+
+  if (mut.id === 'rain'){                    // «ЛИВЕНЬ»: ровно вдвое, а не «чуть больше»
+    const n = gems.length - gemStart;
+    for (let i = 0; i < n; i++){
+      const g0 = gems[gemStart + i];
+      gems.push({x:g0.x + 42*S, y:g0.y - 48*S, got:false, ph:Math.random()*6.28});
     }
   }
 
@@ -698,13 +741,22 @@ function clampV(k){
 // ============================================================
 //  КОМБО / ЗАРЯД / РЫВОК
 // ============================================================
+const comboWin = () => Math.max(1.8, COMBO_T - heat*0.38) * (mut && mut.id === 'rain' ? 0.7 : 1);
 function bump(n){
-  combo += n; comboT = COMBO_T;
-  const m = Math.min(8, 1 + Math.floor(combo/4) * 0.5);
+  combo += n; comboT = comboWin();
+  const m = Math.min(20, 1 + Math.floor(combo/4) * 0.5);
   if (m > mult){
     mult = m; maxMult = Math.max(maxMult, mult);
     elMult.classList.add('pop');
     setTimeout(()=>elMult.classList.remove('pop'), 150);
+    const nh = heatOf(mult);
+    if (nh > heat){                                  // новая ступень разгона
+      heat = nh;
+      const Hh = HEATS[nh-1];
+      toast(Hh.nm); flo(ball.x, ball.y - 54*S, Hh.nm, Hh.col);
+      shake = Math.max(shake, 0.45); sfx('heat');
+      for (let i = 0; i < 20; i++) puff(ball.x, ball.y, Hh.col);
+    }
   }
 }
 function addCharge(n){
@@ -769,7 +821,13 @@ function step(dt){
   if (mods.plane  > 0) mods.plane  -= dt;
   if (rushT       > 0) rushT       -= dt;
   if (invuln      > 0) invuln      -= dt;
-  if (comboT      > 0){ comboT -= dt; if (comboT <= 0){ combo = 0; mult = 1; } }
+  if (comboT      > 0){
+    comboT -= dt;
+    if (comboT <= 0){
+      if (heat > 0){ flo(ball.x, ball.y - 40*S, 'ОСТЫЛ', '#7b83b8'); sfx('cool'); }
+      combo = 0; mult = 1; heat = 0;
+    }
+  }
 
   // ---------- движение ----------
   if (rushT > 0){
@@ -877,7 +935,30 @@ function step(dt){
 
   // ---------- очки ----------
   dist = Math.max(dist, toM(ball.x - startX));
-  score += (ball.vx * dt / (11*S)) * mult;
+  score += (ball.vx * dt / (11*S)) * mult * (mut.id === 'sprint' ? 1.25 : 1);
+
+  // --- маяк личного рекорда: конкретная цель прямо в забеге ---
+  if (recX && !recDone && ball.x > recX){
+    recDone = true;
+    bump(3); addCharge(30); score += 250*mult;
+    stop = 0.09; shake = Math.max(shake, 0.9);
+    toast('РЕКОРД ПОБИТ'); flo(ball.x, ball.y - 58*S, 'РЕКОРД ПОБИТ!', '#ffd257');
+    for (let i = 0; i < 34; i++) puff(ball.x, ball.y, i%2 ? '#ffd257' : '#ffffff');
+    sfx('record'); haptic([25,40,25]);
+  }
+
+  // --- задания: сообщаем сразу, а не только на экране итогов ---
+  misT -= dt;
+  if (misT <= 0){
+    misT = 0.3;
+    for (let i = 0; i < missions.length; i++){
+      if (misDone[i]) continue;
+      if (missionProgress(missions[i]).done){
+        misDone[i] = true;
+        toast('ЗАДАНИЕ ВЫПОЛНЕНО'); sfx('mission');
+      }
+    }
+  }
 
   // ---------- искры ----------
   const pull = mods.magnet > 0 ? MAG_R() : (rushT > 0 ? MAG_R()*1.3 : 0);
@@ -988,7 +1069,7 @@ function kill(fell){
   for (let i=0;i<30;i++) puff(ball.x, ball.y, i%3 ? '#ff5d6e' : '#ffd257');
   sfx('die'); haptic([30,60,30]);
   elRush.classList.remove('on');
-  setTimeout(finish, 720);
+  setTimeout(finish, 430);
 }
 
 function missionProgress(m){
@@ -1013,6 +1094,8 @@ function finish(){
   const sc = Math.floor(score);
   const rec = sc > curBest();
   if (gameMode === 'rhythm') bestR = Math.max(bestR, sc); else best = Math.max(best, sc);
+  const dm = Math.floor(dist);
+  if (gameMode === 'rhythm') bestDR = Math.max(bestDR, dm); else bestD = Math.max(bestD, dm);
 
   // задания
   let bonus = 0;
@@ -1089,7 +1172,13 @@ function puff(x,y,c){
   parts.push({x, y, vx:(Math.random()-.5)*185*S, vy:(Math.random()-.5)*185*S,
               l:1, c, r:(2+Math.random()*3)*S});
 }
-function flo(x,y,t,c){ if (floats.length < 14) floats.push({x,y,t,c,l:1}); }
+function flo(x,y,t,c){
+  if (floats.length >= 14) return;
+  // разводим по вертикали: одновременные подписи иначе сливаются в кашу
+  for (const f of floats)
+    if (Math.abs(f.y - y) < 17*S && Math.abs(f.x - x) < 100*S) y -= 19*S;
+  floats.push({x,y,t,c,l:1});
+}
 function segD(px,py,x1,y1,x2,y2){
   const dx = x2-x1, dy = y2-y1, l2 = dx*dx + dy*dy;
   let t = l2 ? ((px-x1)*dx + (py-y1)*dy)/l2 : 0;
@@ -1162,6 +1251,10 @@ const SFX = {
   biome:  {f:520, t:'sine',     d:0.5,  v:0.07, f2:1300},
   revive: {f:330, t:'triangle', d:0.45, v:0.08, f2:990},
   die:    {f:220, t:'sawtooth', d:0.45, v:0.1,  f2:70},
+  heat:   {f:420, t:'square',   d:0.26, v:0.07, f2:1250},
+  cool:   {f:520, t:'sine',     d:0.3,  v:0.05, f2:180},
+  record: {f:520, t:'square',   d:0.5,  v:0.09, f2:1580},
+  mission:{f:700, t:'triangle', d:0.3,  v:0.07, f2:1400},
   buy:    {f:780, t:'triangle', d:0.14, v:0.07, f2:1170},
   nope:   {f:170, t:'square',   d:0.11, v:0.06}
 };
@@ -2000,6 +2093,26 @@ function draw(){
     drawAnchor(a);
   }
 
+  // --- маяк личного рекорда ---
+  if (recX && !recDone && recX > cam - 40 && recX < cam + W + 120){
+    const pulse = 0.5 + 0.5*Math.sin(tPlay*3.4);
+    const g2 = ctx.createLinearGradient(recX - 16*S, 0, recX + 16*S, 0);
+    g2.addColorStop(0,   'rgba(255,210,87,0)');
+    g2.addColorStop(0.5, 'rgba(255,210,87,' + (0.16 + pulse*0.12).toFixed(3) + ')');
+    g2.addColorStop(1,   'rgba(255,210,87,0)');
+    ctx.fillStyle = g2; ctx.fillRect(recX - 16*S, 0, 32*S, H);
+    ctx.strokeStyle = 'rgba(255,210,87,' + (0.5 + pulse*0.4).toFixed(3) + ')';
+    ctx.lineWidth = 2*S; ctx.setLineDash([10*S, 8*S]);
+    ctx.beginPath(); ctx.moveTo(recX, 0); ctx.lineTo(recX, H); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.font = '700 ' + (11*S) + 'px ui-monospace,Menlo,monospace';
+    ctx.fillStyle = 'rgba(255,210,87,' + (0.7 + pulse*0.3).toFixed(3) + ')';
+    ctx.fillText('ТВОЙ РЕКОРД · ' + Math.floor(curBestD()) + ' М', recX, H*0.2);
+    ctx.restore();
+  }
+
   // --- подсветка цели ---
   if (mode === 'play' && !rope && rushT <= 0 && mods.plane <= 0){
     const t = findAnchor();
@@ -2097,6 +2210,24 @@ function draw(){
     }
   }
   ctx.restore();  // мир
+
+  // --- накал: чем выше ступень, тем горячее кадр ---
+  if (heat > 0 && mode === 'play'){
+    const Hh = HEATS[heat-1], k = Math.min(1, heat/4);
+    const g3 = ctx.createRadialGradient(W*0.5, H*0.5, H*0.28, W*0.5, H*0.5, H*0.82);
+    g3.addColorStop(0, rgba(Hh.rgb, 0));
+    g3.addColorStop(1, rgba(Hh.rgb, +(0.05 + k*0.13).toFixed(3)));
+    ctx.fillStyle = g3; ctx.fillRect(0, 0, W, H);
+    if (heat >= 2){                                  // линии скорости
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.05 + k*0.09).toFixed(3) + ')';
+      ctx.lineWidth = 1.5*S;
+      for (let i = 0; i < 7; i++){
+        const ly = ((i*151 + tPlay*640) % (H+120)) - 60;
+        const lx = ((i*263 + tPlay*900) % (W+260)) - 130;
+        ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx - 60*S - k*50*S, ly); ctx.stroke();
+      }
+    }
+  }
 
   // --- предупреждение о падении ---
   if (mode === 'play' && ball.y > H*0.86){
@@ -2243,6 +2374,7 @@ function renderMissions(){
 // ============================================================
 function show(id){
   if (id !== 'scrPause') stopTrack();
+  if (id === 'scrOver') overAt = performance.now();
   ov.classList.remove('hidden');
   for (const s of ov.querySelectorAll('.scr')) s.classList.toggle('hidden', s.id !== id);
   money(); elBest.textContent = curBest();
@@ -2260,6 +2392,7 @@ function start(m){
   ov.classList.add('hidden');
   lastT = performance.now(); acc = 0; nextNote = ac ? ac.currentTime : 0;
   if (gameMode === 'rhythm') playTrack(0); else stopTrack();
+  if (mut && mut.id !== 'none'){ toast(mut.nm); flo(ball.x, ball.y - 56*S, mut.nm, '#6eefff'); }
 }
 let pausedAt = 0;
 function pause(){
@@ -2315,6 +2448,18 @@ $('fileIn').onchange  = async e => {
   }
 };
 $('bRhythmGo').onclick = e => { e.stopPropagation(); if (bm) start('rhythm'); };
+
+// перезапуск тапом в любом месте экрана итогов; небольшая задержка,
+// чтобы серия тапов перед смертью не рестартовала забег случайно
+ov.addEventListener('pointerdown', e => {
+  if (mode !== 'over') return;
+  if ($('scrOver').classList.contains('hidden')) return;
+  if (performance.now() - overAt < 400) return;
+  // кнопки гасят только click, но не pointerdown — иначе тап по
+  // «В МЕНЮ» или «ПРОДОЛЖИТЬ» перезапускал бы забег вместо своего действия
+  if (e.target && e.target.closest && e.target.closest('button')) return;
+  start();
+});
 
 $('bPlay').onclick    = e => { e.stopPropagation(); start('classic'); };
 $('bAgain').onclick   = e => { e.stopPropagation(); start(); };
