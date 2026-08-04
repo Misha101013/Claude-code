@@ -1,0 +1,19 @@
+{
+  "name": "war-of-wizards-2d",
+  "version": "1.0.0",
+  "description": "2D онлайн арена магов для телефона — War of Wizards в 2D",
+  "main": "server/index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  },
+  "license": "MIT"
+}

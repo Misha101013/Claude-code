@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0714">
+<meta name="description" content="War of Wizards 2D — онлайн арена магов прямо в браузере телефона">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧙</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+<title>War of Wizards 2D — онлайн арена магов</title>
+</head>
+<body>
+
+<canvas id="game"></canvas>
+
+<!-- ── Игровой HUD ─────────────────────────────────────────── -->
+<div id="hud" class="hidden">
+  <div class="top-bar">
+    <div class="tb-left">
+      <div id="timer" class="pill">6:00</div>
+      <div id="ping" class="pill small">— мс</div>
+    </div>
+    <div class="tb-center">
+      <div id="leaders" class="leaders"></div>
+    </div>
+    <div class="tb-right">
+      <button id="btn-score" class="icon-btn" aria-label="Таблица">📊</button>
+      <button id="btn-menu" class="icon-btn" aria-label="Меню">☰</button>
+    </div>
+  </div>
+
+  <div id="feed" class="feed"></div>
+
+  <div class="bottom-left">
+    <div class="bars">
+      <div class="bar hp"><i id="bar-hp"></i><span id="hp-text">100</span></div>
+      <div class="bar mp"><i id="bar-mp"></i><span id="mp-text">100</span></div>
+    </div>
+  </div>
+
+  <div id="skills" class="skills">
+    <button class="skill dash" data-slot="3"><span class="ico">💨</span><b class="cd"></b><small>Рывок</small></button>
+    <button class="skill s1" data-slot="1"><span class="ico">🌋</span><b class="cd"></b><small></small></button>
+    <button class="skill s2" data-slot="2"><span class="ico">☄️</span><b class="cd"></b><small></small></button>
+    <button class="skill s0" data-slot="0"><span class="ico">🔥</span><b class="cd"></b><small></small></button>
+  </div>
+
+  <canvas id="minimap"></canvas>
+
+  <div id="dead" class="overlay-center hidden">
+    <div class="dead-card">
+      <div class="dead-title">Вы повержены</div>
+      <div class="dead-sub">Возрождение через <span id="respawn-t">3.5</span>с</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Таблица очков ───────────────────────────────────────── -->
+<div id="scoreboard" class="sheet hidden">
+  <div class="sheet-inner">
+    <h2>Таблица</h2>
+    <div class="score-head"><span>#</span><span>Маг</span><span>К</span><span>С</span><span>Серия</span></div>
+    <div id="score-rows"></div>
+    <button class="btn ghost" id="score-close">Закрыть</button>
+  </div>
+</div>
+
+<!-- ── Меню паузы ──────────────────────────────────────────── -->
+<div id="menu" class="sheet hidden">
+  <div class="sheet-inner">
+    <h2>Меню</h2>
+    <label class="row"><span>Звук</span><input type="checkbox" id="opt-sound" checked></label>
+    <label class="row"><span>Тряска экрана</span><input type="checkbox" id="opt-shake" checked></label>
+    <label class="row"><span>Автоприцел</span><input type="checkbox" id="opt-aim" checked></label>
+    <label class="row"><span>Левша (зеркальные стики)</span><input type="checkbox" id="opt-left"></label>
+    <div class="menu-hint">Школу магии можно сменить прямо в бою — заклинания поменяются сразу.</div>
+    <div id="menu-classes" class="menu-classes"></div>
+    <button class="btn" id="menu-close">Продолжить</button>
+    <button class="btn ghost" id="menu-exit">Выйти в лобби</button>
+  </div>
+</div>
+
+<!-- ── Итоги матча ─────────────────────────────────────────── -->
+<div id="results" class="overlay-center hidden">
+  <div class="results-card">
+    <h2>Матч окончен</h2>
+    <div id="results-rows"></div>
+    <div class="results-next">Новый матч начнётся автоматически…</div>
+  </div>
+</div>
+
+<!-- ── Лобби ───────────────────────────────────────────────── -->
+<div id="lobby" class="lobby">
+  <div class="lobby-bg"></div>
+  <div class="lobby-inner">
+    <h1 class="logo">WAR OF <span>WIZARDS</span><small>2D · онлайн арена</small></h1>
+
+    <input id="nick" class="nick" maxlength="14" placeholder="Ваше имя" autocomplete="off" spellcheck="false">
+
+    <div class="classes" id="class-list"></div>
+
+    <button id="play" class="btn big">В БОЙ ⚔️</button>
+    <div id="status" class="status">Подключение…</div>
+
+    <details class="help">
+      <summary>Как играть</summary>
+      <ul>
+        <li><b>Левый стик</b> — движение, <b>правый стик</b> — прицел и автоатака.</li>
+        <li><b>Кнопки справа</b> — способности и рывок. Серый круг — перезарядка.</li>
+        <li>Синие сферы дают ману, зелёные — здоровье.</li>
+        <li>Камни блокируют заклинания — прячьтесь за ними.</li>
+        <li>На ПК: <b>WASD</b>, мышь — прицел, <b>ЛКМ</b> — атака, <b>Q/E</b> — способности, <b>Shift</b> — рывок.</li>
+      </ul>
+    </details>
+    <div class="online" id="online-info"></div>
+  </div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/net.js"></script>
+<script src="js/input.js"></script>
+<script src="js/render.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
